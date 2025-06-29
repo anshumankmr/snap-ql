@@ -17,7 +17,7 @@ else
 	BUILT_APP := dist/win-unpacked/Snap QL.exe
 endif
 
-.PHONY: help install dev build clean lint format typecheck dist-mac dist-win dist-linux dist-all link unlink
+.PHONY: help install dev build clean lint format typecheck dist-mac dist-win dist-linux dist-all link unlink quick-check ci install-global
 
 # Default target
 help:
@@ -101,6 +101,13 @@ unlink:
 		echo "No wrapper script found at $(BIN_DIR)/$(APP_NAME)"; \
 	fi
 
-# Convenience target: build and link in one step
-install-global: dist-mac link
+# Platform-aware global install
+install-global:
+ifeq ($(UNAME_S),Darwin)
+	$(MAKE) dist-mac link
+else ifeq ($(UNAME_S),Linux)
+	$(MAKE) dist-linux link
+else
+	$(MAKE) dist-win link
+endif
 	@echo "✅ SnapQL built and installed globally!"
