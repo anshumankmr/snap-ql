@@ -15,6 +15,8 @@ declare global {
       setOpenAiBaseUrl: (openAiBaseUrl: string) => Promise<boolean>
       getOpenAiModel: () => Promise<string>
       setOpenAiModel: (openAiModel: string) => Promise<boolean>
+      getQueryHistory: () => Promise<any[]>
+      addQueryToHistory: (queryEntry: any) => Promise<boolean>
     }
   }
 }
