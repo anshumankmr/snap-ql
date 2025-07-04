@@ -25,3 +25,5 @@ I will eventually ship some precompiled binaries, but that takes some setup. In 
     src="https://hackerbadge.now.sh/api?id=44326620"
   />
 </a>
+
+[![Tip in Crypto](https://tip.md/badge.svg)](https://tip.md/NickTikhonov)
