@@ -1,18 +1,58 @@
 import pg from 'pg'
+import mysql from 'mysql'
 import { generateObject } from 'ai'
 import { createOpenAI } from '@ai-sdk/openai'
 import { z } from 'zod'
 
-export async function testPostgresConnection(connectionString: string): Promise<boolean> {
+// check if it is a valid postgres or mysql connection string. testing only the first part of the connection string.
+// e.g.:
+// mysql:  mysql://user:pass@host/db?debug=true&charset=BIG5_CHINESE_CI&timezone=-0700
+// postgres: postgres://postgres:123456@127.0.0.1:5432/dummy
+function parseConnectionString(connectionString: string): 'postgres' | 'mysql' | null {
+  // split by // and check if the first part is postgres or mysql
+  const parts = connectionString.split('//')
+  if (parts.length > 0) {
+    const firstPart = parts[0]
+    if (firstPart.includes('postgres')) {
+      return 'postgres'
+    }
+    if (firstPart.includes('mysql')) {
+      return 'mysql'
+    }
+  }
+  return null
+}
+
+export async function testConnectionString(connectionString: string): Promise<void> {
   console.log('Testing connection string: ', connectionString)
-  const client = new pg.Client({ connectionString })
-  try {
+  const dbType = parseConnectionString(connectionString)
+  console.log('DB type: ', dbType)
+  if (dbType === 'postgres') {
+    const client = new pg.Client({ connectionString })
     await client.connect()
     await client.end()
-    return true
-  } catch (error) {
-    console.error('Failed to connect to pg: ', error)
-    return false
+  } else if (dbType === 'mysql') {
+    const client = mysql.createConnection(connectionString)
+    await new Promise((resolve, reject) => {
+      client.connect((err) => {
+        if (err) {
+          reject(err)
+        } else {
+          resolve(true)
+        }
+      })
+    })
+    await new Promise((resolve, reject) => {
+      client.end((err) => {
+        if (err) {
+          reject(err)
+        } else {
+          resolve(true)
+        }
+      })
+    })
+  } else {
+    throw new Error('Invalid connection string')
   }
 }
 
