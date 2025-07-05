@@ -12,7 +12,8 @@ import {
   getOpenAiModel,
   setOpenAiModel,
   getQueryHistory,
-  addQueryToHistory
+  addQueryToHistory,
+  setConnectionString
 } from './lib/state'
 
 function createWindow(): void {
@@ -67,6 +68,7 @@ app.whenReady().then(() => {
     console.log('Setting connection string: ', connectionString)
     try {
       await testConnectionString(connectionString)
+      await setConnectionString(connectionString)
       return true
     } catch (error) {
       console.error('Error testing connection string:', error)
@@ -135,10 +137,10 @@ app.whenReady().then(() => {
       if (connectionString.length === 0) {
         return { error: 'No connection string set' }
       }
-      const res = await runQuery(connectionString, query)
+      const rows = await runQuery(connectionString, query)
       return {
         error: null,
-        data: res.rows
+        data: rows
       }
     } catch (error: any) {
       return {
