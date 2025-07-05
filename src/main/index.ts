@@ -13,7 +13,9 @@ import {
   setOpenAiModel,
   getQueryHistory,
   addQueryToHistory,
-  setConnectionString
+  setConnectionString,
+  getPromptExtension,
+  setPromptExtension
 } from './lib/state'
 
 function createWindow(): void {
@@ -111,11 +113,13 @@ app.whenReady().then(() => {
       const openAiKey = await getOpenAiKey()
       const openAiBaseUrl = await getOpenAiBaseUrl()
       const openAiModel = await getOpenAiModel()
+      const promptExtension = await getPromptExtension()
       const query = await generateQuery(
         input,
-        connectionString,
-        openAiKey,
+        connectionString ?? '',
+        openAiKey ?? '',
         existingQuery,
+        promptExtension ?? '',
         openAiBaseUrl,
         openAiModel
       )
@@ -133,7 +137,7 @@ app.whenReady().then(() => {
 
   ipcMain.handle('runQuery', async (_, query) => {
     try {
-      const connectionString = await getConnectionString()
+      const connectionString = (await getConnectionString()) ?? ''
       if (connectionString.length === 0) {
         return { error: 'No connection string set' }
       }
@@ -168,6 +172,14 @@ app.whenReady().then(() => {
       console.error('Error saving query to history:', error)
       return false
     }
+  })
+
+  ipcMain.handle('getPromptExtension', async () => {
+    return (await getPromptExtension()) ?? ''
+  })
+
+  ipcMain.handle('setPromptExtension', async (_, promptExtension) => {
+    await setPromptExtension(promptExtension)
   })
 
   createWindow()

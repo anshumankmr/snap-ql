@@ -67,6 +67,7 @@ export async function generateQuery(
   connectionString: string,
   openAiKey: string,
   existingQuery: string,
+  promptExtension: string,
   openAiUrl?: string,
   openAiModel?: string
 ) {
@@ -92,6 +93,8 @@ export async function generateQuery(
       Only retrieval queries are allowed.
 
       ${existing.length > 0 ? `The user's existing query is: ${existing}` : ``}
+
+      ${promptExtension.length > 0 ? `Extra information: ${promptExtension}` : ``}
 
       format the query in a way that is easy to read and understand.
       ${dbType === 'postgres' ? 'wrap table names in double quotes' : ''}

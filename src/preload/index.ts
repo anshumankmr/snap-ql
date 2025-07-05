@@ -22,8 +22,11 @@ try {
     setOpenAiModel: async (openAiModel: string) =>
       await ipcRenderer.invoke('setOpenAiModel', openAiModel),
     getQueryHistory: async () => await ipcRenderer.invoke('getQueryHistory'),
-    addQueryToHistory: async (queryEntry: any) => 
-      await ipcRenderer.invoke('addQueryToHistory', queryEntry)
+    addQueryToHistory: async (queryEntry: any) =>
+      await ipcRenderer.invoke('addQueryToHistory', queryEntry),
+    getPromptExtension: async () => await ipcRenderer.invoke('getPromptExtension'),
+    setPromptExtension: async (promptExtension: string) =>
+      await ipcRenderer.invoke('setPromptExtension', promptExtension)
   })
 } catch (error) {
   console.error(error)

@@ -15,7 +15,8 @@ const settingsSchema = z.object({
   openAiKey: z.string().optional(),
   openAiBaseUrl: z.string().optional(),
   openAiModel: z.string().optional(),
-  queryHistory: z.array(queryHistorySchema).optional()
+  queryHistory: z.array(queryHistorySchema).optional(),
+  promptExtension: z.string().optional()
 })
 
 const defaultSettings: z.infer<typeof settingsSchema> = {
@@ -23,7 +24,8 @@ const defaultSettings: z.infer<typeof settingsSchema> = {
   openAiKey: undefined,
   openAiBaseUrl: undefined,
   openAiModel: undefined,
-  queryHistory: []
+  queryHistory: [],
+  promptExtension: undefined
 }
 
 function rootDir() {
@@ -36,7 +38,7 @@ async function settingsPath() {
   return `${root}/settings.json`
 }
 
-async function getSettings() {
+async function getSettings(): Promise<z.infer<typeof settingsSchema>> {
   const path = await settingsPath()
   let settings
   try {
@@ -117,5 +119,20 @@ export async function addQueryToHistory(query: z.infer<typeof queryHistorySchema
   const currentHistory = settings.queryHistory || []
   const newHistory = [query, ...currentHistory.slice(0, 19)] // Keep last 20 queries
   settings.queryHistory = newHistory
+  await setSettings(settings)
+}
+
+export async function getPromptExtension() {
+  const settings = await getSettings()
+  return settings.promptExtension
+}
+
+export async function setPromptExtension(promptExtension: string) {
+  const settings = await getSettings()
+  let val: string | undefined = promptExtension.trim()
+  if (val.length === 0) {
+    val = undefined
+  }
+  settings.promptExtension = val
   await setSettings(settings)
 }

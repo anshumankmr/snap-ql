@@ -17,6 +17,8 @@ declare global {
       setOpenAiModel: (openAiModel: string) => Promise<boolean>
       getQueryHistory: () => Promise<any[]>
       addQueryToHistory: (queryEntry: any) => Promise<boolean>
+      getPromptExtension: () => Promise<string>
+      setPromptExtension: (promptExtension: string) => Promise<boolean>
     }
   }
 }
