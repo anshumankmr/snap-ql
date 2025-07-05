@@ -3,18 +3,27 @@ import fs from 'fs-extra'
 
 import { z } from 'zod'
 
+const queryHistorySchema = z.object({
+  id: z.string(),
+  query: z.string(),
+  results: z.array(z.any()),
+  timestamp: z.string() // ISO string format
+})
+
 const settingsSchema = z.object({
   connectionString: z.string().optional(),
   openAiKey: z.string().optional(),
   openAiBaseUrl: z.string().optional(),
-  openAiModel: z.string().optional()
+  openAiModel: z.string().optional(),
+  queryHistory: z.array(queryHistorySchema).optional()
 })
 
 const defaultSettings: z.infer<typeof settingsSchema> = {
   connectionString: undefined,
   openAiKey: undefined,
   openAiBaseUrl: undefined,
-  openAiModel: undefined
+  openAiModel: undefined,
+  queryHistory: []
 }
 
 function rootDir() {
@@ -89,5 +98,24 @@ export async function setOpenAiBaseUrl(openAiBaseUrl: string) {
 export async function setOpenAiModel(openAiModel: string) {
   const settings = await getSettings()
   settings.openAiModel = openAiModel
+  await setSettings(settings)
+}
+
+export async function getQueryHistory() {
+  const settings = await getSettings()
+  return settings.queryHistory || []
+}
+
+export async function setQueryHistory(queryHistory: z.infer<typeof queryHistorySchema>[]) {
+  const settings = await getSettings()
+  settings.queryHistory = queryHistory
+  await setSettings(settings)
+}
+
+export async function addQueryToHistory(query: z.infer<typeof queryHistorySchema>) {
+  const settings = await getSettings()
+  const currentHistory = settings.queryHistory || []
+  const newHistory = [query, ...currentHistory.slice(0, 19)] // Keep last 20 queries
+  settings.queryHistory = newHistory
   await setSettings(settings)
 }

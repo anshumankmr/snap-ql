@@ -20,7 +20,10 @@ try {
       await ipcRenderer.invoke('setOpenAiBaseUrl', openAiBaseUrl),
     getOpenAiModel: async () => await ipcRenderer.invoke('getOpenAiModel'),
     setOpenAiModel: async (openAiModel: string) =>
-      await ipcRenderer.invoke('setOpenAiModel', openAiModel)
+      await ipcRenderer.invoke('setOpenAiModel', openAiModel),
+    getQueryHistory: async () => await ipcRenderer.invoke('getQueryHistory'),
+    addQueryToHistory: async (queryEntry: any) => 
+      await ipcRenderer.invoke('addQueryToHistory', queryEntry)
   })
 } catch (error) {
   console.error(error)
