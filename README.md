@@ -2,7 +2,7 @@
 
 cursor for data ⚡️ - generate queries and charts in seconds
 
-https://github.com/user-attachments/assets/92d168c1-316b-4dc4-8c56-8b676f1626c1
+https://github.com/user-attachments/assets/e1c38ef9-4ee9-4d38-96ee-02584e9ef67c
 
 - generate schema-aware queries in seconds with AI
 - automatically chart your data 
