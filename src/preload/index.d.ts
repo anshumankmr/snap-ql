@@ -1,9 +1,7 @@
 export type QueryResponse = {
   query: string
   graphXColumn?: string
-  graphXType?: 'date' | 'number' | 'string'
-  graphYColumn?: string
-  graphYType?: 'date' | 'number' | 'string'
+  graphYColumns?: string[]
 }
 
 declare global {

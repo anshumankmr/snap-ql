@@ -65,9 +65,7 @@ export async function runQuery(connectionString: string, query: string): Promise
 export type QueryResponse = {
   query: string
   graphXColumn?: string
-  graphXType?: 'date' | 'number' | 'string'
-  graphYColumn?: string
-  graphYType?: 'date' | 'number' | 'string'
+  graphYColumns?: string[]
 }
 
 export async function generateQuery(
@@ -106,15 +104,13 @@ export async function generateQuery(
 
       format the query in a way that is easy to read and understand.
       ${dbType === 'postgres' ? 'wrap table names in double quotes' : ''}
-      if it makes sense to explore the query on a graph, provide the x and y columns and the type of the x and y columns.
+      if the query results can be effectively visualized using a graph, specify which column should be used for the x-axis (domain) and which column(s) should be used for the y-axis (range).
     `,
       prompt: `Generate the query necessary to retrieve the data the user wants: ${input}`,
       schema: z.object({
         query: z.string(),
         graphXColumn: z.string().optional(),
-        graphXType: z.enum(['date', 'number', 'string']).optional(),
-        graphYColumn: z.string().optional(),
-        graphYType: z.enum(['date', 'number', 'string']).optional()
+        graphYColumns: z.array(z.string()).optional()
       }),
       providerOptions: {
         openai: {

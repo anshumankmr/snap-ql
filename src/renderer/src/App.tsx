@@ -9,22 +9,28 @@ import { Toaster } from './components/ui/toaster'
 import { useToast } from './hooks/use-toast'
 import { Button } from './components/ui/button'
 import { ThemeProvider, useTheme } from './components/ui/theme-provider'
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid } from 'recharts'
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid
+} from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card'
 
 interface QueryHistory {
   id: string
   query: string
   results: any[]
-  graphMetadata?: GraphMetadata
+  graph?: GraphMetadata // past: graphMetadata
   timestamp: Date
 }
 
 type GraphMetadata = {
   graphXColumn: string
-  graphXType: 'date' | 'number' | 'string'
-  graphYColumn: string
-  graphYType: 'date' | 'number' | 'string'
+  graphYColumns: string[]
 }
 
 const Index = () => {
@@ -40,6 +46,8 @@ const Index = () => {
   const { theme } = useTheme()
 
   const { toast } = useToast()
+
+  const graphableData = queryResults.slice(0, 10000) // limit to 10k rows for performance
 
   // Load query history on startup
   useEffect(() => {
@@ -80,7 +88,7 @@ const Index = () => {
           id: Date.now().toString(),
           query: query,
           results: res.data,
-          graphMetadata: graphMetadata ?? undefined,
+          graph: graphMetadata ?? undefined,
           timestamp: new Date()
         }
 
@@ -120,17 +128,10 @@ const Index = () => {
         setError(res.error)
       } else {
         setSqlQuery(res.data.query)
-        if (
-          res.data.graphXColumn &&
-          res.data.graphYColumn &&
-          res.data.graphXType &&
-          res.data.graphYType
-        ) {
+        if (res.data.graphXColumn && res.data.graphYColumns && res.data.graphYColumns.length > 0) {
           setGraphMetadata({
             graphXColumn: res.data.graphXColumn,
-            graphXType: res.data.graphXType,
-            graphYColumn: res.data.graphYColumn,
-            graphYType: res.data.graphYType
+            graphYColumns: res.data.graphYColumns
           })
         }
         toast({
@@ -150,7 +151,7 @@ const Index = () => {
   const handleHistorySelect = (historyItem: QueryHistory) => {
     setSqlQuery(historyItem.query)
     setQueryResults(historyItem.results)
-    setGraphMetadata(historyItem.graphMetadata ?? null)
+    setGraphMetadata(historyItem.graph ?? null)
   }
 
   return (
@@ -189,20 +190,20 @@ const Index = () => {
                     </CardHeader>
                     <CardContent>
                       <ResponsiveContainer width="100%" height={200}>
-                        <LineChart data={queryResults}>
+                        <LineChart data={graphableData}>
                           <CartesianGrid strokeDasharray="3 3" />
                           <XAxis
                             dataKey={graphMetadata?.graphXColumn}
                             tick={{ fontSize: '12px' }}
                           />
                           <YAxis
-                            dataKey={graphMetadata?.graphYColumn}
                             tick={{ fontSize: '12px' }}
+                            domain={['auto', 'auto']} // Ensure Y values are within bounds
                           />
                           <Tooltip
                             formatter={(_, name, props) => {
-                              const yValue = props.payload[graphMetadata?.graphYColumn];
-                              return [`${yValue}`, name];
+                              const value = props.payload[name];
+                              return [`${name}: ${value}`];
                             }}
                             contentStyle={{
                               backgroundColor: theme === 'dark' ? 'black' : 'white',
@@ -211,12 +212,19 @@ const Index = () => {
                               padding: '10px'
                             }}
                           />
-                          <Line
-                            type="monotone"
-                            dataKey={graphMetadata?.graphYColumn}
-                            stroke="#ff5e00"
-                            strokeWidth={3}
-                          />
+                          {graphMetadata?.graphYColumns.map((column, i) => {
+                            const orangeColors = ['#ff5e00', '#005eff', '#11ff7f', '#1c9fff'];
+                            const color = orangeColors[i % orangeColors.length];
+                            return (
+                              <Line
+                                key={column}
+                                type="monotone"
+                                dataKey={column}
+                                stroke={color}
+                                strokeWidth={3}
+                              />
+                            );
+                          })}
                         </LineChart>
                       </ResponsiveContainer>
                     </CardContent>
