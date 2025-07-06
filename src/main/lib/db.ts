@@ -62,6 +62,14 @@ export async function runQuery(connectionString: string, query: string): Promise
   }
 }
 
+export type QueryResponse = {
+  query: string
+  graphXColumn?: string
+  graphXType?: 'date' | 'number' | 'string'
+  graphYColumn?: string
+  graphYType?: 'date' | 'number' | 'string'
+}
+
 export async function generateQuery(
   input: string,
   connectionString: string,
@@ -70,7 +78,7 @@ export async function generateQuery(
   promptExtension: string,
   openAiUrl?: string,
   openAiModel?: string
-) {
+): Promise<QueryResponse> {
   try {
     const openai = createOpenAI({
       apiKey: openAiKey,
@@ -98,10 +106,15 @@ export async function generateQuery(
 
       format the query in a way that is easy to read and understand.
       ${dbType === 'postgres' ? 'wrap table names in double quotes' : ''}
+      if it makes sense to explore the query on a graph, provide the x and y columns and the type of the x and y columns.
     `,
       prompt: `Generate the query necessary to retrieve the data the user wants: ${input}`,
       schema: z.object({
-        query: z.string()
+        query: z.string(),
+        graphXColumn: z.string().optional(),
+        graphXType: z.enum(['date', 'number', 'string']).optional(),
+        graphYColumn: z.string().optional(),
+        graphYType: z.enum(['date', 'number', 'string']).optional()
       }),
       providerOptions: {
         openai: {
@@ -109,7 +122,7 @@ export async function generateQuery(
         }
       }
     })
-    return result.object.query
+    return result.object as QueryResponse
   } catch (e: any) {
     console.error(e)
     throw new Error('Failed to generate query: ' + e.message)

@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { useState, useEffect } from 'react'
 import { Sidebar } from './components/Sidebar'
 import { SQLEditor } from './components/SQLEditor'
@@ -7,23 +8,36 @@ import { Settings } from './components/Settings'
 import { Toaster } from './components/ui/toaster'
 import { useToast } from './hooks/use-toast'
 import { Button } from './components/ui/button'
-import { ThemeProvider } from './components/ui/theme-provider'
+import { ThemeProvider, useTheme } from './components/ui/theme-provider'
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid } from 'recharts'
+import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card'
 
 interface QueryHistory {
   id: string
   query: string
   results: any[]
+  graphMetadata?: GraphMetadata
   timestamp: Date
+}
+
+type GraphMetadata = {
+  graphXColumn: string
+  graphXType: 'date' | 'number' | 'string'
+  graphYColumn: string
+  graphYType: 'date' | 'number' | 'string'
 }
 
 const Index = () => {
   const [currentView, setCurrentView] = useState<'editor' | 'settings'>('editor')
   const [sqlQuery, setSqlQuery] = useState('SELECT * FROM information_schema.tables;')
+  const [graphMetadata, setGraphMetadata] = useState<GraphMetadata | null>(null)
   const [queryResults, setQueryResults] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [queryHistory, setQueryHistory] = useState<QueryHistory[]>([])
   const [error, setError] = useState<string | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
+
+  const { theme } = useTheme()
 
   const { toast } = useToast()
 
@@ -66,12 +80,13 @@ const Index = () => {
           id: Date.now().toString(),
           query: query,
           results: res.data,
+          graphMetadata: graphMetadata ?? undefined,
           timestamp: new Date()
         }
 
         // Update local state
         setQueryHistory((prev) => [historyEntry, ...prev.slice(0, 19)]) // Keep last 20 queries
-        
+
         // Persist to storage
         try {
           const historyEntryForStorage = {
@@ -93,6 +108,7 @@ const Index = () => {
 
   const handleAIQuery = async (userQuery: string) => {
     setIsGenerating(true)
+    setGraphMetadata(null)
     toast({
       title: 'Generating query...',
       description: 'The query is being generated...',
@@ -103,12 +119,25 @@ const Index = () => {
       if (res.error) {
         setError(res.error)
       } else {
-        setSqlQuery(res.data)
+        setSqlQuery(res.data.query)
+        if (
+          res.data.graphXColumn &&
+          res.data.graphYColumn &&
+          res.data.graphXType &&
+          res.data.graphYType
+        ) {
+          setGraphMetadata({
+            graphXColumn: res.data.graphXColumn,
+            graphXType: res.data.graphXType,
+            graphYColumn: res.data.graphYColumn,
+            graphYType: res.data.graphYType
+          })
+        }
         toast({
           title: 'Query generated!',
           description: 'The query was generated successfully',
           duration: 1500,
-          action: <Button onClick={() => runQuery(res.data)}>Run!</Button>
+          action: <Button onClick={() => runQuery(res.data.query)}>Run!</Button>
         })
       }
     } catch (error: any) {
@@ -121,6 +150,7 @@ const Index = () => {
   const handleHistorySelect = (historyItem: QueryHistory) => {
     setSqlQuery(historyItem.query)
     setQueryResults(historyItem.results)
+    setGraphMetadata(historyItem.graphMetadata ?? null)
   }
 
   return (
@@ -152,6 +182,46 @@ const Index = () => {
                   />
                 </div>
                 {error && <div className="text-red-500">{error}</div>}
+                {graphMetadata && queryResults.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base">Graph</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={200}>
+                        <LineChart data={queryResults}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis
+                            dataKey={graphMetadata?.graphXColumn}
+                            tick={{ fontSize: '12px' }}
+                          />
+                          <YAxis
+                            dataKey={graphMetadata?.graphYColumn}
+                            tick={{ fontSize: '12px' }}
+                          />
+                          <Tooltip
+                            formatter={(value, name, props) => {
+                              const yValue = props.payload[graphMetadata?.graphYColumn];
+                              return [`${yValue}`, name];
+                            }}
+                            contentStyle={{
+                              backgroundColor: theme === 'dark' ? 'black' : 'white',
+                              color: theme === 'dark' ? 'white' : 'black',
+                              borderRadius: '10px',
+                              padding: '10px'
+                            }}
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey={graphMetadata?.graphYColumn}
+                            stroke="#ff5e00"
+                            strokeWidth={3}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+                )}
                 <div className="flex-1 min-h-0 flex-grow">
                   <ResultsTable results={queryResults} isLoading={isLoading} query={sqlQuery} />
                 </div>

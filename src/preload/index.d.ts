@@ -1,3 +1,11 @@
+export type QueryResponse = {
+  query: string
+  graphXColumn?: string
+  graphXType?: 'date' | 'number' | 'string'
+  graphYColumn?: string
+  graphYType?: 'date' | 'number' | 'string'
+}
+
 declare global {
   interface Window {
     context: {
@@ -8,7 +16,7 @@ declare global {
       generateQuery: (
         input: string,
         sqlQuery: string
-      ) => Promise<{ error: string | null; data: string }>
+      ) => Promise<{ error: string | null; data: QueryResponse }>
       getOpenAiKey: () => Promise<string>
       setOpenAiKey: (openAiKey: string) => Promise<boolean>
       getOpenAiBaseUrl: () => Promise<string>
