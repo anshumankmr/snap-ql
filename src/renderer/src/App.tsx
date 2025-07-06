@@ -16,7 +16,8 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  CartesianGrid
+  CartesianGrid,
+  Legend
 } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card'
 
@@ -189,9 +190,10 @@ const Index = () => {
                       <CardTitle className="text-base">Graph</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <ResponsiveContainer width="100%" height={200}>
+                      <ResponsiveContainer width="100%" height={300}>
                         <LineChart data={graphableData}>
                           <CartesianGrid strokeDasharray="3 3" />
+                          <Legend style={{ fontSize: '8px' }} />
                           <XAxis
                             dataKey={graphMetadata?.graphXColumn}
                             tick={{ fontSize: '12px' }}
@@ -202,8 +204,8 @@ const Index = () => {
                           />
                           <Tooltip
                             formatter={(_, name, props) => {
-                              const value = props.payload[name];
-                              return [`${name}: ${value}`];
+                              const value = props.payload[name]
+                              return [`${name}: ${value}`]
                             }}
                             contentStyle={{
                               backgroundColor: theme === 'dark' ? 'black' : 'white',
@@ -213,8 +215,23 @@ const Index = () => {
                             }}
                           />
                           {graphMetadata?.graphYColumns.map((column, i) => {
-                            const orangeColors = ['#ff5e00', '#005eff', '#11ff7f', '#1c9fff'];
-                            const color = orangeColors[i % orangeColors.length];
+                            const orangeColors = [
+                              '#ff5e00',
+                              '#005eff',
+                              '#11ff7f',
+                              '#1c9fff',
+                              '#ff007f',
+                              '#7f00ff',
+                              '#00ff7f',
+                              '#ffbf00',
+                              '#00bfff',
+                              '#ff00bf',
+                              '#7fff00',
+                              '#bf00ff',
+                              '#ff7f00',
+                              '#00ffbf'
+                            ]
+                            const color = orangeColors[i % orangeColors.length]
                             return (
                               <Line
                                 key={column}
@@ -223,7 +240,7 @@ const Index = () => {
                                 stroke={color}
                                 strokeWidth={3}
                               />
-                            );
+                            )
                           })}
                         </LineChart>
                       </ResponsiveContainer>

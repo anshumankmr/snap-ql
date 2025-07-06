@@ -12,12 +12,9 @@ interface AIChatProps {
 
 export const AIChat = ({ onUserQuery, isGenerating }: AIChatProps) => {
   const [prompt, setPrompt] = useState('')
-  const [lastPrompt, setLastPrompt] = useState<string | null>(null)
 
   const handleGenerateQuery = async () => {
-    setLastPrompt(prompt)
     onUserQuery(prompt)
-    setPrompt('')
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -41,9 +38,7 @@ export const AIChat = ({ onUserQuery, isGenerating }: AIChatProps) => {
             onChange={(e) => setPrompt(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder={
-              lastPrompt
-                ? lastPrompt
-                : "Describe what you want to query (e.g., 'show me all users from last week')"
+              "Describe what you want to query (e.g., 'show me all users from last week')"
             }
             className="flex-1 h-8 text-xs"
           />
