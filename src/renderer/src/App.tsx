@@ -200,7 +200,7 @@ const Index = () => {
                             tick={{ fontSize: '12px' }}
                           />
                           <Tooltip
-                            formatter={(value, name, props) => {
+                            formatter={(_, name, props) => {
                               const yValue = props.payload[graphMetadata?.graphYColumn];
                               return [`${yValue}`, name];
                             }}
