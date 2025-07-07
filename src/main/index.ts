@@ -2,7 +2,7 @@ import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../logo.png?asset'
-import { generateQuery, runQuery, testConnectionString } from './lib/db'
+import { runQuery, testConnectionString } from './lib/db'
 import {
   getConnectionString,
   getOpenAiKey,
@@ -17,6 +17,7 @@ import {
   getPromptExtension,
   setPromptExtension
 } from './lib/state'
+import { generateQuery } from './lib/ai'
 
 function createWindow(): void {
   // Create the browser window.
