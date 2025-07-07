@@ -1,4 +1,12 @@
-import { app, shell, BrowserWindow, ipcMain, Menu, MenuItemConstructorOptions, clipboard } from 'electron'
+import {
+  app,
+  shell,
+  BrowserWindow,
+  ipcMain,
+  Menu,
+  MenuItemConstructorOptions,
+  clipboard
+} from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../logo.png?asset'
@@ -39,7 +47,7 @@ function createMenu(): void {
           }
         },
         { type: 'separator' },
-        process.platform === 'darwin' 
+        process.platform === 'darwin'
           ? { label: 'Quit SnapQL', accelerator: 'CmdOrCtrl+Q', click: () => app.quit() }
           : { label: 'Exit', accelerator: 'CmdOrCtrl+Q', click: () => app.quit() }
       ]
@@ -93,7 +101,7 @@ function createWindow(): void {
   })
 
   // Add context menu with copy/paste functionality
-  mainWindow.webContents.on('context-menu', (event, props) => {
+  mainWindow.webContents.on('context-menu', (_, props) => {
     const { selectionText, isEditable } = props
     const contextMenuTemplate: MenuItemConstructorOptions[] = []
 
@@ -196,11 +204,11 @@ app.whenReady().then(() => {
       const connectionString = await getConnectionString()
       const aiProvider = await getAiProvider()
       const promptExtension = await getPromptExtension()
-      
+
       let apiKey: string
       let model: string | undefined
       let openAiBaseUrl: string | undefined
-      
+
       if (aiProvider === 'openai') {
         apiKey = (await getOpenAiKey()) ?? ''
         model = await getOpenAiModel()
@@ -209,7 +217,7 @@ app.whenReady().then(() => {
         apiKey = (await getClaudeApiKey()) ?? ''
         model = await getClaudeModel()
       }
-      
+
       const query = await generateQuery(
         input,
         connectionString ?? '',

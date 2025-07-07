@@ -145,6 +145,10 @@ const Index = () => {
     setGraphMetadata(historyItem.graph ?? null)
   }
 
+  const handleGraphMetadataChange = (newMetadata: GraphMetadata) => {
+    setGraphMetadata(newMetadata)
+  }
+
   return (
     <ThemeProvider defaultTheme="dark" storageKey="ui-theme">
       <div className="min-h-screen bg-background flex">
@@ -175,7 +179,11 @@ const Index = () => {
                 </div>
                 {error && <div className="text-red-500">{error}</div>}
                 {graphMetadata && queryResults.length > 0 && (
-                  <Graph data={graphableData} graphMetadata={graphMetadata} />
+                  <Graph
+                    data={graphableData}
+                    graphMetadata={graphMetadata}
+                    onMetadataChange={handleGraphMetadataChange}
+                  />
                 )}
                 <div className="flex-1 min-h-0 flex-grow">
                   <ResultsTable results={queryResults} isLoading={isLoading} query={sqlQuery} />

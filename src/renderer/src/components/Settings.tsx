@@ -4,7 +4,13 @@ import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../components/ui/collapsible'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '../components/ui/select'
 import { TestTube, ChevronDown } from 'lucide-react'
 import { useToast } from '../hooks/use-toast'
 import { ModeToggle } from './ui/mode-toggle'
@@ -205,7 +211,10 @@ export const Settings = () => {
       }
       setApiKeyError(null)
     } catch (error: any) {
-      setApiKeyError(`Failed to save the ${aiProvider === 'openai' ? 'OpenAI' : 'Claude'} API key: ` + error.message)
+      setApiKeyError(
+        `Failed to save the ${aiProvider === 'openai' ? 'OpenAI' : 'Claude'} API key: ` +
+          error.message
+      )
     } finally {
       setIsSavingApiKey(false)
     }
@@ -240,7 +249,10 @@ export const Settings = () => {
       }
       setModelError(null)
     } catch (error: any) {
-      setModelError(`Failed to save the ${aiProvider === 'openai' ? 'OpenAI' : 'Claude'} model: ` + error.message)
+      setModelError(
+        `Failed to save the ${aiProvider === 'openai' ? 'OpenAI' : 'Claude'} model: ` +
+          error.message
+      )
     } finally {
       setIsSavingModel(false)
     }
@@ -352,8 +364,8 @@ export const Settings = () => {
               id="api-key"
               type="text"
               value={aiProvider === 'openai' ? openAIApiKey : claudeApiKey}
-              onChange={(e) => 
-                aiProvider === 'openai' 
+              onChange={(e) =>
+                aiProvider === 'openai'
                   ? setOpenAIApiKey(e.target.value)
                   : setClaudeApiKey(e.target.value)
               }
@@ -395,7 +407,10 @@ export const Settings = () => {
 
           <Button
             onClick={updateApiKey}
-            disabled={isSavingApiKey || !(aiProvider === 'openai' ? openAIApiKey.trim() : claudeApiKey.trim())}
+            disabled={
+              isSavingApiKey ||
+              !(aiProvider === 'openai' ? openAIApiKey.trim() : claudeApiKey.trim())
+            }
             className="flex items-center space-x-1.5 h-8 px-3 text-xs"
             size="sm"
           >
@@ -428,8 +443,8 @@ export const Settings = () => {
                       autoComplete="off"
                     />
                     <p className="text-xs text-muted-foreground">
-                      Custom base URL for OpenAI API. Leave empty to use the default OpenAI endpoint.
-                      Useful for OpenAI-compatible APIs like Azure OpenAI or local models.
+                      Custom base URL for OpenAI API. Leave empty to use the default OpenAI
+                      endpoint. Useful for OpenAI-compatible APIs like Azure OpenAI or local models.
                     </p>
                     {baseUrlError && <p className="text-xs text-destructive">{baseUrlError}</p>}
                     {baseUrlSuccess && <p className="text-xs text-green-500">{baseUrlSuccess}</p>}
@@ -455,8 +470,8 @@ export const Settings = () => {
                   id="model"
                   type="text"
                   value={aiProvider === 'openai' ? openAIModel : claudeModel}
-                  onChange={(e) => 
-                    aiProvider === 'openai' 
+                  onChange={(e) =>
+                    aiProvider === 'openai'
                       ? setOpenAIModel(e.target.value)
                       : setClaudeModel(e.target.value)
                   }
@@ -466,10 +481,15 @@ export const Settings = () => {
                 />
                 <p className="text-xs text-muted-foreground">
                   {aiProvider === 'openai' ? (
-                    <>Model ID to use for query generation. Leave empty to use gpt-4o (default).
-                    Examples: gpt-4, gpt-3.5-turbo, gpt-4o-mini.</>
+                    <>
+                      Model ID to use for query generation. Leave empty to use gpt-4o (default).
+                      Examples: gpt-4, gpt-3.5-turbo, gpt-4o-mini.
+                    </>
                   ) : (
-                    <>Model ID to use for query generation. Leave empty to use claude-sonnet-4-20250514 (default).</>
+                    <>
+                      Model ID to use for query generation. Leave empty to use
+                      claude-sonnet-4-20250514 (default).
+                    </>
                   )}
                 </p>
                 {modelError && <p className="text-xs text-destructive">{modelError}</p>}
