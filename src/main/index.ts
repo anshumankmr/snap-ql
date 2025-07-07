@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain, Menu, MenuItemConstructorOptions } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, Menu, MenuItemConstructorOptions, clipboard } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../logo.png?asset'
@@ -15,7 +15,13 @@ import {
   addQueryToHistory,
   setConnectionString,
   getPromptExtension,
-  setPromptExtension
+  setPromptExtension,
+  getAiProvider,
+  setAiProvider,
+  getClaudeApiKey,
+  setClaudeApiKey,
+  getClaudeModel,
+  setClaudeModel
 } from './lib/state'
 import { homedir } from 'os'
 import { generateQuery } from './lib/ai'
@@ -86,6 +92,41 @@ function createWindow(): void {
     return { action: 'deny' }
   })
 
+  // Add context menu with copy/paste functionality
+  mainWindow.webContents.on('context-menu', (event, props) => {
+    const { selectionText, isEditable } = props
+    const contextMenuTemplate: MenuItemConstructorOptions[] = []
+
+    if (isEditable) {
+      contextMenuTemplate.push({
+        label: 'Cut',
+        accelerator: 'CmdOrCtrl+X',
+        role: 'cut'
+      })
+      contextMenuTemplate.push({
+        label: 'Copy',
+        accelerator: 'CmdOrCtrl+C',
+        role: 'copy'
+      })
+      contextMenuTemplate.push({
+        label: 'Paste',
+        accelerator: 'CmdOrCtrl+V',
+        role: 'paste'
+      })
+    } else if (selectionText) {
+      contextMenuTemplate.push({
+        label: 'Copy',
+        accelerator: 'CmdOrCtrl+C',
+        role: 'copy'
+      })
+    }
+
+    if (contextMenuTemplate.length > 0) {
+      const contextMenu = Menu.buildFromTemplate(contextMenuTemplate)
+      contextMenu.popup({ window: mainWindow })
+    }
+  })
+
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
@@ -153,18 +194,31 @@ app.whenReady().then(() => {
     try {
       console.log('Generating query with input: ', input, 'and existing query: ', existingQuery)
       const connectionString = await getConnectionString()
-      const openAiKey = await getOpenAiKey()
-      const openAiBaseUrl = await getOpenAiBaseUrl()
-      const openAiModel = await getOpenAiModel()
+      const aiProvider = await getAiProvider()
       const promptExtension = await getPromptExtension()
+      
+      let apiKey: string
+      let model: string | undefined
+      let openAiBaseUrl: string | undefined
+      
+      if (aiProvider === 'openai') {
+        apiKey = (await getOpenAiKey()) ?? ''
+        model = await getOpenAiModel()
+        openAiBaseUrl = await getOpenAiBaseUrl()
+      } else {
+        apiKey = (await getClaudeApiKey()) ?? ''
+        model = await getClaudeModel()
+      }
+      
       const query = await generateQuery(
         input,
         connectionString ?? '',
-        openAiKey ?? '',
+        aiProvider,
+        apiKey,
         existingQuery,
         promptExtension ?? '',
         openAiBaseUrl,
-        openAiModel
+        model
       )
       return {
         error: null,
@@ -225,7 +279,30 @@ app.whenReady().then(() => {
     await setPromptExtension(promptExtension)
   })
 
-  createMenu()
+  ipcMain.handle('getAiProvider', async () => {
+    return await getAiProvider()
+  })
+
+  ipcMain.handle('setAiProvider', async (_, aiProvider) => {
+    await setAiProvider(aiProvider)
+  })
+
+  ipcMain.handle('getClaudeApiKey', async () => {
+    return (await getClaudeApiKey()) ?? ''
+  })
+
+  ipcMain.handle('setClaudeApiKey', async (_, claudeApiKey) => {
+    await setClaudeApiKey(claudeApiKey)
+  })
+
+  ipcMain.handle('getClaudeModel', async () => {
+    return (await getClaudeModel()) ?? ''
+  })
+
+  ipcMain.handle('setClaudeModel', async (_, claudeModel) => {
+    await setClaudeModel(claudeModel)
+  })
+
   createWindow()
 
   app.on('activate', function () {

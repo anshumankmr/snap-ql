@@ -4,6 +4,7 @@ import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../components/ui/collapsible'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
 import { TestTube, ChevronDown } from 'lucide-react'
 import { useToast } from '../hooks/use-toast'
 import { ModeToggle } from './ui/mode-toggle'
@@ -14,7 +15,9 @@ export const Settings = () => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [isTesting, setIsTesting] = useState(false)
   const [connectionString, setConnectionString] = useState<string>('')
+  const [aiProvider, setAiProvider] = useState<'openai' | 'claude'>('openai')
   const [openAIApiKey, setOpenAIApiKey] = useState<string>('')
+  const [claudeApiKey, setClaudeApiKey] = useState<string>('')
   const [apiKeyError, setApiKeyError] = useState<string | null>(null)
   const [apiKeySuccess, setApiKeySuccess] = useState<string | null>(null)
   const [isSavingApiKey, setIsSavingApiKey] = useState(false)
@@ -23,6 +26,7 @@ export const Settings = () => {
   const [baseUrlSuccess, setBaseUrlSuccess] = useState<string | null>(null)
   const [isSavingBaseUrl, setIsSavingBaseUrl] = useState(false)
   const [openAIModel, setOpenAIModel] = useState<string>('')
+  const [claudeModel, setClaudeModel] = useState<string>('')
   const [modelError, setModelError] = useState<string | null>(null)
   const [modelSuccess, setModelSuccess] = useState<string | null>(null)
   const [isSavingModel, setIsSavingModel] = useState(false)
@@ -54,6 +58,19 @@ export const Settings = () => {
     loadSavedConnectionString()
   }, [toast])
 
+  // Load the saved AI provider when the component mounts
+  useEffect(() => {
+    const loadSavedAiProvider = async () => {
+      try {
+        const savedAiProvider = await window.context.getAiProvider()
+        setAiProvider(savedAiProvider)
+      } catch (error: any) {
+        console.error('Failed to load AI provider:', error)
+      }
+    }
+    loadSavedAiProvider()
+  }, [toast])
+
   // Load the saved OpenAI API key when the component mounts
   useEffect(() => {
     const loadSavedApiKey = async () => {
@@ -67,6 +84,21 @@ export const Settings = () => {
       }
     }
     loadSavedApiKey()
+  }, [toast])
+
+  // Load the saved Claude API key when the component mounts
+  useEffect(() => {
+    const loadSavedClaudeApiKey = async () => {
+      try {
+        const savedApiKey = await window.context.getClaudeApiKey()
+        if (savedApiKey) {
+          setClaudeApiKey(savedApiKey)
+        }
+      } catch (error: any) {
+        setApiKeyError('Failed to load the Claude API key. Please try again.')
+      }
+    }
+    loadSavedClaudeApiKey()
   }, [toast])
 
   // Load the saved OpenAI base URL when the component mounts
@@ -97,6 +129,21 @@ export const Settings = () => {
       }
     }
     loadSavedModel()
+  }, [toast])
+
+  // Load the saved Claude model when the component mounts
+  useEffect(() => {
+    const loadSavedClaudeModel = async () => {
+      try {
+        const savedModel = await window.context.getClaudeModel()
+        if (savedModel) {
+          setClaudeModel(savedModel)
+        }
+      } catch (error: any) {
+        setModelError('Failed to load the Claude model. Please try again.')
+      }
+    }
+    loadSavedClaudeModel()
   }, [toast])
 
   // Load the saved prompt extension when the component mounts
@@ -135,16 +182,30 @@ export const Settings = () => {
     }
   }
 
-  const updateOpenAIApiKey = async () => {
+  const updateAiProvider = async (provider: 'openai' | 'claude') => {
+    try {
+      await window.context.setAiProvider(provider)
+      setAiProvider(provider)
+    } catch (error: any) {
+      console.error('Failed to save AI provider:', error)
+    }
+  }
+
+  const updateApiKey = async () => {
     setIsSavingApiKey(true)
     setApiKeySuccess(null)
     setApiKeyError(null)
     try {
-      await window.context.setOpenAiKey(openAIApiKey)
+      if (aiProvider === 'openai') {
+        await window.context.setOpenAiKey(openAIApiKey)
+        setApiKeySuccess('OpenAI API key saved successfully.')
+      } else {
+        await window.context.setClaudeApiKey(claudeApiKey)
+        setApiKeySuccess('Claude API key saved successfully.')
+      }
       setApiKeyError(null)
-      setApiKeySuccess('OpenAI API key saved successfully.')
     } catch (error: any) {
-      setApiKeyError('Failed to save the OpenAI API key: ' + error.message)
+      setApiKeyError(`Failed to save the ${aiProvider === 'openai' ? 'OpenAI' : 'Claude'} API key: ` + error.message)
     } finally {
       setIsSavingApiKey(false)
     }
@@ -165,16 +226,21 @@ export const Settings = () => {
     }
   }
 
-  const updateOpenAIModel = async () => {
+  const updateModel = async () => {
     setIsSavingModel(true)
     setModelSuccess(null)
     setModelError(null)
     try {
-      await window.context.setOpenAiModel(openAIModel)
+      if (aiProvider === 'openai') {
+        await window.context.setOpenAiModel(openAIModel)
+        setModelSuccess('OpenAI model saved successfully.')
+      } else {
+        await window.context.setClaudeModel(claudeModel)
+        setModelSuccess('Claude model saved successfully.')
+      }
       setModelError(null)
-      setModelSuccess('Model ID saved successfully.')
     } catch (error: any) {
-      setModelError('Failed to save the OpenAI model: ' + error.message)
+      setModelError(`Failed to save the ${aiProvider === 'openai' ? 'OpenAI' : 'Claude'} model: ` + error.message)
     } finally {
       setIsSavingModel(false)
     }
@@ -255,46 +321,81 @@ export const Settings = () => {
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-base">OpenAI API Key</CardTitle>
+              <CardTitle className="text-base">AI Provider</CardTitle>
               <CardDescription className="text-xs">
-                Enter your OpenAI API key to enable AI-powered features.
+                Configure your AI provider for query generation.
               </CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-3 pt-0">
           <div className="space-y-1.5">
-            <Label htmlFor="openai-api-key" className="text-xs">
+            <Label htmlFor="ai-provider" className="text-xs">
+              Provider
+            </Label>
+            <Select value={aiProvider} onValueChange={updateAiProvider}>
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue placeholder="Select AI provider" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="openai">OpenAI</SelectItem>
+                <SelectItem value="claude">Claude</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="api-key" className="text-xs">
               API Key
             </Label>
             <Input
-              id="openai-api-key"
-              type="password"
-              value={openAIApiKey}
-              onChange={(e) => setOpenAIApiKey(e.target.value)}
-              placeholder="sk-..."
+              id="api-key"
+              type="text"
+              value={aiProvider === 'openai' ? openAIApiKey : claudeApiKey}
+              onChange={(e) => 
+                aiProvider === 'openai' 
+                  ? setOpenAIApiKey(e.target.value)
+                  : setClaudeApiKey(e.target.value)
+              }
+              placeholder={aiProvider === 'openai' ? 'sk-...' : 'sk-ant-...'}
               className="font-mono text-xs h-8"
-              autoComplete="off"
             />
             <p className="text-xs text-muted-foreground">
-              You can create an API key at{' '}
-              <a
-                href="https://platform.openai.com/account/api-keys"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline"
-              >
-                OpenAI API Keys
-              </a>
-              .
+              {aiProvider === 'openai' ? (
+                <>
+                  You can create an API key at{' '}
+                  <a
+                    href="https://platform.openai.com/account/api-keys"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline"
+                  >
+                    OpenAI API Keys
+                  </a>
+                  .
+                </>
+              ) : (
+                <>
+                  You can create an API key at{' '}
+                  <a
+                    href="https://console.anthropic.com/account/keys"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline"
+                  >
+                    Anthropic Console
+                  </a>
+                  .
+                </>
+              )}
             </p>
             {apiKeyError && <p className="text-xs text-destructive">{apiKeyError}</p>}
             {apiKeySuccess && <p className="text-xs text-green-500">{apiKeySuccess}</p>}
           </div>
 
           <Button
-            onClick={updateOpenAIApiKey}
-            disabled={isSavingApiKey || !openAIApiKey.trim()}
+            onClick={updateApiKey}
+            disabled={isSavingApiKey || !(aiProvider === 'openai' ? openAIApiKey.trim() : claudeApiKey.trim())}
             className="flex items-center space-x-1.5 h-8 px-3 text-xs"
             size="sm"
           >
@@ -311,60 +412,72 @@ export const Settings = () => {
               </Button>
             </CollapsibleTrigger>
             <CollapsibleContent className="space-y-3 pt-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="openai-base-url" className="text-xs">
-                  Base URL (Optional)
-                </Label>
-                <Input
-                  id="openai-base-url"
-                  type="text"
-                  value={openAIBaseUrl}
-                  onChange={(e) => setOpenAIBaseUrl(e.target.value)}
-                  placeholder="https://api.openai.com/v1"
-                  className="font-mono text-xs h-8"
-                  autoComplete="off"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Custom base URL for OpenAI API. Leave empty to use the default OpenAI endpoint.
-                  Useful for OpenAI-compatible APIs like Azure OpenAI or local models.
-                </p>
-                {baseUrlError && <p className="text-xs text-destructive">{baseUrlError}</p>}
-                {baseUrlSuccess && <p className="text-xs text-green-500">{baseUrlSuccess}</p>}
-              </div>
+              {aiProvider === 'openai' && (
+                <>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="openai-base-url" className="text-xs">
+                      Base URL (Optional)
+                    </Label>
+                    <Input
+                      id="openai-base-url"
+                      type="text"
+                      value={openAIBaseUrl}
+                      onChange={(e) => setOpenAIBaseUrl(e.target.value)}
+                      placeholder="https://api.openai.com/v1"
+                      className="font-mono text-xs h-8"
+                      autoComplete="off"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Custom base URL for OpenAI API. Leave empty to use the default OpenAI endpoint.
+                      Useful for OpenAI-compatible APIs like Azure OpenAI or local models.
+                    </p>
+                    {baseUrlError && <p className="text-xs text-destructive">{baseUrlError}</p>}
+                    {baseUrlSuccess && <p className="text-xs text-green-500">{baseUrlSuccess}</p>}
+                  </div>
 
-              <Button
-                onClick={updateOpenAIBaseUrl}
-                disabled={isSavingBaseUrl}
-                className="flex items-center space-x-1.5 h-8 px-3 text-xs"
-                size="sm"
-                variant="outline"
-              >
-                <span>{isSavingBaseUrl ? 'Saving...' : 'Save Base URL'}</span>
-              </Button>
+                  <Button
+                    onClick={updateOpenAIBaseUrl}
+                    disabled={isSavingBaseUrl}
+                    className="flex items-center space-x-1.5 h-8 px-3 text-xs"
+                    size="sm"
+                    variant="outline"
+                  >
+                    <span>{isSavingBaseUrl ? 'Saving...' : 'Save Base URL'}</span>
+                  </Button>
+                </>
+              )}
 
               <div className="space-y-1.5">
-                <Label htmlFor="openai-model" className="text-xs">
+                <Label htmlFor="model" className="text-xs">
                   Model (Optional)
                 </Label>
                 <Input
-                  id="openai-model"
+                  id="model"
                   type="text"
-                  value={openAIModel}
-                  onChange={(e) => setOpenAIModel(e.target.value)}
-                  placeholder="gpt-4o"
+                  value={aiProvider === 'openai' ? openAIModel : claudeModel}
+                  onChange={(e) => 
+                    aiProvider === 'openai' 
+                      ? setOpenAIModel(e.target.value)
+                      : setClaudeModel(e.target.value)
+                  }
+                  placeholder={aiProvider === 'openai' ? 'gpt-4o' : 'claude-sonnet-4-20250514'}
                   className="font-mono text-xs h-8"
                   autoComplete="off"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Model ID to use for query generation. Leave empty to use gpt-4o (default).
-                  Examples: gpt-4, gpt-3.5-turbo, claude-3-sonnet, or custom model names.
+                  {aiProvider === 'openai' ? (
+                    <>Model ID to use for query generation. Leave empty to use gpt-4o (default).
+                    Examples: gpt-4, gpt-3.5-turbo, gpt-4o-mini.</>
+                  ) : (
+                    <>Model ID to use for query generation. Leave empty to use claude-sonnet-4-20250514 (default).</>
+                  )}
                 </p>
                 {modelError && <p className="text-xs text-destructive">{modelError}</p>}
                 {modelSuccess && <p className="text-xs text-green-500">{modelSuccess}</p>}
               </div>
 
               <Button
-                onClick={updateOpenAIModel}
+                onClick={updateModel}
                 disabled={isSavingModel}
                 className="flex items-center space-x-1.5 h-8 px-3 text-xs"
                 size="sm"

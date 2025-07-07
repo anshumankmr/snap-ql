@@ -26,7 +26,16 @@ try {
       await ipcRenderer.invoke('addQueryToHistory', queryEntry),
     getPromptExtension: async () => await ipcRenderer.invoke('getPromptExtension'),
     setPromptExtension: async (promptExtension: string) =>
-      await ipcRenderer.invoke('setPromptExtension', promptExtension)
+      await ipcRenderer.invoke('setPromptExtension', promptExtension),
+    getAiProvider: async () => await ipcRenderer.invoke('getAiProvider'),
+    setAiProvider: async (aiProvider: 'openai' | 'claude') =>
+      await ipcRenderer.invoke('setAiProvider', aiProvider),
+    getClaudeApiKey: async () => await ipcRenderer.invoke('getClaudeApiKey'),
+    setClaudeApiKey: async (claudeApiKey: string) =>
+      await ipcRenderer.invoke('setClaudeApiKey', claudeApiKey),
+    getClaudeModel: async () => await ipcRenderer.invoke('getClaudeModel'),
+    setClaudeModel: async (claudeModel: string) =>
+      await ipcRenderer.invoke('setClaudeModel', claudeModel)
   })
 } catch (error) {
   console.error(error)

@@ -25,6 +25,12 @@ declare global {
       addQueryToHistory: (queryEntry: any) => Promise<boolean>
       getPromptExtension: () => Promise<string>
       setPromptExtension: (promptExtension: string) => Promise<boolean>
+      getAiProvider: () => Promise<'openai' | 'claude'>
+      setAiProvider: (aiProvider: 'openai' | 'claude') => Promise<boolean>
+      getClaudeApiKey: () => Promise<string>
+      setClaudeApiKey: (claudeApiKey: string) => Promise<boolean>
+      getClaudeModel: () => Promise<string>
+      setClaudeModel: (claudeModel: string) => Promise<boolean>
     }
   }
 }

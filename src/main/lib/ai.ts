@@ -1,5 +1,6 @@
 import { generateObject } from 'ai'
 import { createOpenAI } from '@ai-sdk/openai'
+import { createAnthropic } from '@ai-sdk/anthropic'
 import { z } from 'zod'
 import { getTableSchema, parseConnectionString } from './db'
 
@@ -12,25 +13,40 @@ export type QueryResponse = {
 export async function generateQuery(
   input: string,
   connectionString: string,
-  openAiKey: string,
+  aiProvider: 'openai' | 'claude',
+  apiKey: string,
   existingQuery: string,
   promptExtension: string,
   openAiUrl?: string,
-  openAiModel?: string
+  model?: string
 ): Promise<QueryResponse> {
   try {
-    const openai = createOpenAI({
-      apiKey: openAiKey,
-      baseURL: openAiUrl || undefined
-    })
     const tableSchema = await getTableSchema(connectionString)
     const existing = existingQuery.trim()
-
-    // Use provided model or default to gpt-4o
-    const modelToUse = openAiModel || 'gpt-4o'
     const dbType = parseConnectionString(connectionString)
     if (!dbType) {
       throw new Error('Invalid connection string')
+    }
+
+    // Configure AI provider
+    let aiModel: any
+    let modelToUse: string
+
+    if (aiProvider === 'openai') {
+      const openai = createOpenAI({
+        apiKey: apiKey,
+        baseURL: openAiUrl || undefined
+      })
+      modelToUse = model || 'gpt-4o'
+      aiModel = openai(modelToUse)
+    } else if (aiProvider === 'claude') {
+      const anthropic = createAnthropic({
+        apiKey: apiKey
+      })
+      modelToUse = model || 'claude-sonnet-4-20250514'
+      aiModel = anthropic(modelToUse)
+    } else {
+      throw new Error(`Unsupported AI provider: ${aiProvider}`)
     }
 
     const systemPrompt = `
@@ -52,19 +68,14 @@ export async function generateQuery(
     console.log('System prompt: ', systemPrompt)
 
     const result = await generateObject({
-      model: openai(modelToUse),
+      model: aiModel,
       system: systemPrompt,
       prompt: input,
       schema: z.object({
         query: z.string(),
         graphXColumn: z.string().optional(),
         graphYColumns: z.array(z.string()).optional()
-      }),
-      providerOptions: {
-        openai: {
-          apiKey: openAiKey
-        }
-      }
+      })
     })
     return result.object as QueryResponse
   } catch (e: any) {

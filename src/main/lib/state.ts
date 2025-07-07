@@ -18,17 +18,23 @@ const queryHistorySchema = z.object({
 
 const settingsSchema = z.object({
   connectionString: z.string().optional(),
+  aiProvider: z.enum(['openai', 'claude']).optional(),
   openAiKey: z.string().optional(),
   openAiBaseUrl: z.string().optional(),
   openAiModel: z.string().optional(),
+  claudeApiKey: z.string().optional(),
+  claudeModel: z.string().optional(),
   promptExtension: z.string().optional()
 })
 
 const defaultSettings: z.infer<typeof settingsSchema> = {
   connectionString: undefined,
+  aiProvider: 'openai',
   openAiKey: undefined,
   openAiBaseUrl: undefined,
   openAiModel: undefined,
+  claudeApiKey: undefined,
+  claudeModel: undefined,
   promptExtension: undefined
 }
 
@@ -192,5 +198,38 @@ export async function setPromptExtension(promptExtension: string) {
     val = undefined
   }
   settings.promptExtension = val
+  await setSettings(settings)
+}
+
+export async function getAiProvider() {
+  const settings = await getSettings()
+  return settings.aiProvider || 'openai'
+}
+
+export async function setAiProvider(aiProvider: 'openai' | 'claude') {
+  const settings = await getSettings()
+  settings.aiProvider = aiProvider
+  await setSettings(settings)
+}
+
+export async function getClaudeApiKey() {
+  const settings = await getSettings()
+  return settings.claudeApiKey
+}
+
+export async function setClaudeApiKey(claudeApiKey: string) {
+  const settings = await getSettings()
+  settings.claudeApiKey = claudeApiKey
+  await setSettings(settings)
+}
+
+export async function getClaudeModel() {
+  const settings = await getSettings()
+  return settings.claudeModel
+}
+
+export async function setClaudeModel(claudeModel: string) {
+  const settings = await getSettings()
+  settings.claudeModel = claudeModel
   await setSettings(settings)
 }
