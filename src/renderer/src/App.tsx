@@ -31,6 +31,7 @@ const Index = () => {
   const [queryResults, setQueryResults] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [queryHistory, setQueryHistory] = useState<QueryHistory[]>([])
+  const [currentHistoryItemId, setCurrentHistoryItemId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
 
@@ -85,6 +86,7 @@ const Index = () => {
 
         // Update local state
         setQueryHistory((prev) => [historyEntry, ...prev.slice(0, 19)]) // Keep last 20 queries
+        setCurrentHistoryItemId(historyEntry.id)
 
         // Persist to storage
         try {
@@ -143,10 +145,30 @@ const Index = () => {
     setSqlQuery(historyItem.query)
     setQueryResults(historyItem.results)
     setGraphMetadata(historyItem.graph ?? null)
+    setCurrentHistoryItemId(historyItem.id)
   }
 
-  const handleGraphMetadataChange = (newMetadata: GraphMetadata) => {
+  const handleGraphMetadataChange = async (newMetadata: GraphMetadata) => {
     setGraphMetadata(newMetadata)
+    
+    // Update the current history item if one is selected
+    if (currentHistoryItemId) {
+      // Update local state
+      setQueryHistory((prev) => 
+        prev.map(item => 
+          item.id === currentHistoryItemId 
+            ? { ...item, graph: newMetadata }
+            : item
+        )
+      )
+      
+      // Persist to storage
+      try {
+        await window.context.updateQueryHistory(currentHistoryItemId, { graph: newMetadata })
+      } catch (error) {
+        console.error('Failed to update query history:', error)
+      }
+    }
   }
 
   return (

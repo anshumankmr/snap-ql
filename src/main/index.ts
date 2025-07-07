@@ -21,6 +21,7 @@ import {
   setOpenAiModel,
   getQueryHistory,
   addQueryToHistory,
+  updateQueryHistory,
   setConnectionString,
   getPromptExtension,
   setPromptExtension,
@@ -275,6 +276,16 @@ app.whenReady().then(() => {
       return true
     } catch (error: any) {
       console.error('Error saving query to history:', error)
+      return false
+    }
+  })
+
+  ipcMain.handle('updateQueryHistory', async (_, queryId, updates) => {
+    try {
+      await updateQueryHistory(queryId, updates)
+      return true
+    } catch (error: any) {
+      console.error('Error updating query history:', error)
       return false
     }
   })

@@ -24,6 +24,8 @@ try {
     getQueryHistory: async () => await ipcRenderer.invoke('getQueryHistory'),
     addQueryToHistory: async (queryEntry: any) =>
       await ipcRenderer.invoke('addQueryToHistory', queryEntry),
+    updateQueryHistory: async (queryId: string, updates: any) =>
+      await ipcRenderer.invoke('updateQueryHistory', queryId, updates),
     getPromptExtension: async () => await ipcRenderer.invoke('getPromptExtension'),
     setPromptExtension: async (promptExtension: string) =>
       await ipcRenderer.invoke('setPromptExtension', promptExtension),

@@ -186,6 +186,14 @@ export async function addQueryToHistory(query: z.infer<typeof queryHistorySchema
   await setHistory(newHistory)
 }
 
+export async function updateQueryHistory(queryId: string, updates: Partial<z.infer<typeof queryHistorySchema>>) {
+  const currentHistory = await getHistory()
+  const updatedHistory = currentHistory.map(query => 
+    query.id === queryId ? { ...query, ...updates } : query
+  )
+  await setHistory(updatedHistory)
+}
+
 export async function getPromptExtension() {
   const settings = await getSettings()
   return settings.promptExtension
