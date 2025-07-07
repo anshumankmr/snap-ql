@@ -92,10 +92,11 @@ export async function generateQuery(
       throw new Error('Invalid connection string')
     }
 
-    const result = await generateObject({
-      model: openai(modelToUse),
-      system: `You are a SQL (${dbType}) and data visualization expert. Your job is to help the user write or modify a SQL query to retrieve the data they need. The table schema is as follows:
+    const systemPrompt = `
+      You are a SQL (${dbType}) and data visualization expert. Your job is to help the user write or modify a SQL query to retrieve the data they need. The table schema is as follows:
+
       ${tableSchema}
+
       Only retrieval queries are allowed.
 
       ${existing.length > 0 ? `The user's existing query is: ${existing}` : ``}
@@ -105,8 +106,14 @@ export async function generateQuery(
       format the query in a way that is easy to read and understand.
       ${dbType === 'postgres' ? 'wrap table names in double quotes' : ''}
       if the query results can be effectively visualized using a graph, specify which column should be used for the x-axis (domain) and which column(s) should be used for the y-axis (range).
-    `,
-      prompt: `Generate the query necessary to retrieve the data the user wants: ${input}`,
+    `
+
+    console.log('System prompt: ', systemPrompt)
+
+    const result = await generateObject({
+      model: openai(modelToUse),
+      system: systemPrompt,
+      prompt: input,
       schema: z.object({
         query: z.string(),
         graphXColumn: z.string().optional(),
@@ -225,6 +232,5 @@ export async function getTableSchema(connectionString: string) {
     })
     .join('\n\n')
 
-  console.log('Table schema: ', schema)
   return schema
 }

@@ -9,17 +9,7 @@ import { Toaster } from './components/ui/toaster'
 import { useToast } from './hooks/use-toast'
 import { Button } from './components/ui/button'
 import { ThemeProvider, useTheme } from './components/ui/theme-provider'
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-  Legend
-} from 'recharts'
-import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card'
+import { Graph } from './components/Graph'
 
 interface QueryHistory {
   id: string
@@ -185,67 +175,7 @@ const Index = () => {
                 </div>
                 {error && <div className="text-red-500">{error}</div>}
                 {graphMetadata && queryResults.length > 0 && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-base">Graph</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ResponsiveContainer width="100%" height={300}>
-                        <LineChart data={graphableData}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <Legend style={{ fontSize: '8px' }} />
-                          <XAxis
-                            dataKey={graphMetadata?.graphXColumn}
-                            tick={{ fontSize: '12px' }}
-                          />
-                          <YAxis
-                            tick={{ fontSize: '12px' }}
-                            domain={['auto', 'auto']} // Ensure Y values are within bounds
-                          />
-                          <Tooltip
-                            formatter={(_, name, props) => {
-                              const value = props.payload[name]
-                              return [`${name}: ${value}`]
-                            }}
-                            contentStyle={{
-                              backgroundColor: theme === 'dark' ? 'black' : 'white',
-                              color: theme === 'dark' ? 'white' : 'black',
-                              borderRadius: '10px',
-                              padding: '10px'
-                            }}
-                          />
-                          {graphMetadata?.graphYColumns.map((column, i) => {
-                            const orangeColors = [
-                              '#ff5e00',
-                              '#005eff',
-                              '#11ff7f',
-                              '#1c9fff',
-                              '#ff007f',
-                              '#7f00ff',
-                              '#00ff7f',
-                              '#ffbf00',
-                              '#00bfff',
-                              '#ff00bf',
-                              '#7fff00',
-                              '#bf00ff',
-                              '#ff7f00',
-                              '#00ffbf'
-                            ]
-                            const color = orangeColors[i % orangeColors.length]
-                            return (
-                              <Line
-                                key={column}
-                                type="monotone"
-                                dataKey={column}
-                                stroke={color}
-                                strokeWidth={3}
-                              />
-                            )
-                          })}
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </CardContent>
-                  </Card>
+                  <Graph data={graphableData} graphMetadata={graphMetadata} />
                 )}
                 <div className="flex-1 min-h-0 flex-grow">
                   <ResultsTable results={queryResults} isLoading={isLoading} query={sqlQuery} />

@@ -3,7 +3,6 @@ import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Card } from '../components/ui/card'
 import { Bot, Send, Sparkles } from 'lucide-react'
-import { useToast } from '../hooks/use-toast'
 
 interface AIChatProps {
   onUserQuery: (query: string) => void
