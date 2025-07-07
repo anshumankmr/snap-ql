@@ -59,14 +59,14 @@ async function getSettings(): Promise<z.infer<typeof settingsSchema>> {
       console.error(error.message)
     }
     settings = defaultSettings
-    await fs.writeJson(path, settings)
+    await fs.writeJson(path, settings, { spaces: 2 })
   }
   return settings
 }
 
 async function setSettings(settings: z.infer<typeof settingsSchema>) {
   const path = await settingsPath()
-  await fs.writeJson(path, settings)
+  await fs.writeJson(path, settings, { spaces: 2 })
 }
 
 async function getHistory(): Promise<z.infer<typeof queryHistorySchema>[]> {
@@ -82,14 +82,14 @@ async function getHistory(): Promise<z.infer<typeof queryHistorySchema>[]> {
       console.error(error.message)
     }
     history = []
-    await fs.writeJson(path, history)
+    await fs.writeJson(path, history, { spaces: 2 })
   }
   return history
 }
 
 async function setHistory(history: z.infer<typeof queryHistorySchema>[]) {
   const path = await historyPath()
-  await fs.writeJson(path, history)
+  await fs.writeJson(path, history, { spaces: 2 })
 }
 
 // Migrates history from settings.json to history.json (to support pre 7 july 2025)
@@ -108,11 +108,11 @@ async function migrateHistoryFromSettings() {
       const settingsData = await fs.readJson(settingsFile)
       if (settingsData.queryHistory && Array.isArray(settingsData.queryHistory)) {
         // Migrate history to new file
-        await fs.writeJson(historyFile, settingsData.queryHistory)
+        await fs.writeJson(historyFile, settingsData.queryHistory, { spaces: 2 })
 
         // Remove history from settings
         delete settingsData.queryHistory
-        await fs.writeJson(settingsFile, settingsData)
+        await fs.writeJson(settingsFile, settingsData, { spaces: 2 })
 
         console.log('Migrated query history from settings.json to history.json')
       }
