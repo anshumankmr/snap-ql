@@ -8,7 +8,7 @@ https://github.com/user-attachments/assets/e1c38ef9-4ee9-4d38-96ee-02584e9ef67c
 - automatically chart your data
 - supports any PostgreSQL and MySQL database
 - local-first - your database credentials don't leave your computer
-- use your own OpenAI key
+- use your own OpenAI or Claude key
 
 💬 [Join the Telegram group to chat with the devs + share feedback!](https://t.me/+QJu4_a2yImo3OTY0)
 
