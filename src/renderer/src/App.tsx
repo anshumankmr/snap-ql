@@ -1,4 +1,3 @@
-/* eslint-disable react/prop-types */
 import { useState, useEffect } from 'react'
 import { Sidebar } from './components/Sidebar'
 import { SQLEditor } from './components/SQLEditor'
@@ -8,7 +7,7 @@ import { Settings } from './components/Settings'
 import { Toaster } from './components/ui/toaster'
 import { useToast } from './hooks/use-toast'
 import { Button } from './components/ui/button'
-import { ThemeProvider, useTheme } from './components/ui/theme-provider'
+import { ThemeProvider } from './components/ui/theme-provider'
 import { Graph } from './components/Graph'
 
 interface QueryHistory {
@@ -34,8 +33,6 @@ const Index = () => {
   const [currentHistoryItemId, setCurrentHistoryItemId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
-
-  const { theme } = useTheme()
 
   const { toast } = useToast()
 
@@ -150,21 +147,40 @@ const Index = () => {
 
   const handleGraphMetadataChange = async (newMetadata: GraphMetadata) => {
     setGraphMetadata(newMetadata)
-    
+
     // Update the current history item if one is selected
     if (currentHistoryItemId) {
       // Update local state
-      setQueryHistory((prev) => 
-        prev.map(item => 
-          item.id === currentHistoryItemId 
-            ? { ...item, graph: newMetadata }
-            : item
+      setQueryHistory((prev) =>
+        prev.map((item) =>
+          item.id === currentHistoryItemId ? { ...item, graph: newMetadata } : item
         )
       )
-      
+
       // Persist to storage
       try {
         await window.context.updateQueryHistory(currentHistoryItemId, { graph: newMetadata })
+      } catch (error) {
+        console.error('Failed to update query history:', error)
+      }
+    }
+  }
+
+  const handleRemoveGraph = async () => {
+    setGraphMetadata(null)
+
+    // Update the current history item if one is selected
+    if (currentHistoryItemId) {
+      // Update local state
+      setQueryHistory((prev) =>
+        prev.map((item) =>
+          item.id === currentHistoryItemId ? { ...item, graph: undefined } : item
+        )
+      )
+
+      // Persist to storage
+      try {
+        await window.context.updateQueryHistory(currentHistoryItemId, { graph: undefined })
       } catch (error) {
         console.error('Failed to update query history:', error)
       }
@@ -205,10 +221,17 @@ const Index = () => {
                     data={graphableData}
                     graphMetadata={graphMetadata}
                     onMetadataChange={handleGraphMetadataChange}
+                    onRemove={handleRemoveGraph}
                   />
                 )}
                 <div className="flex-1 min-h-0 flex-grow">
-                  <ResultsTable results={queryResults} isLoading={isLoading} query={sqlQuery} />
+                  <ResultsTable
+                    results={queryResults}
+                    isLoading={isLoading}
+                    query={sqlQuery}
+                    graphMetadata={graphMetadata}
+                    onCreateGraph={handleGraphMetadataChange}
+                  />
                 </div>
               </div>
             ) : (

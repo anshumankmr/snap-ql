@@ -186,9 +186,12 @@ export async function addQueryToHistory(query: z.infer<typeof queryHistorySchema
   await setHistory(newHistory)
 }
 
-export async function updateQueryHistory(queryId: string, updates: Partial<z.infer<typeof queryHistorySchema>>) {
+export async function updateQueryHistory(
+  queryId: string,
+  updates: Partial<z.infer<typeof queryHistorySchema>>
+) {
   const currentHistory = await getHistory()
-  const updatedHistory = currentHistory.map(query => 
+  const updatedHistory = currentHistory.map((query) =>
     query.id === queryId ? { ...query, ...updates } : query
   )
   await setHistory(updatedHistory)

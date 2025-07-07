@@ -13,16 +13,25 @@ import { Skeleton } from '../components/ui/skeleton'
 import { Badge } from '../components/ui/badge'
 import { ScrollArea } from '../components/ui/scroll-area'
 import { Button } from './ui/button'
-import { Clipboard, Code } from 'lucide-react'
+import { Clipboard, Code, BarChart3 } from 'lucide-react'
 import { useToast } from '@renderer/hooks/use-toast'
+import { GraphEditDialog } from './GraphEditDialog'
+import { GraphMetadata } from './Graph'
 
 interface ResultsTableProps {
   results: any[]
   isLoading: boolean
   query: string
+  graphMetadata?: GraphMetadata | null
+  onCreateGraph?: (metadata: GraphMetadata) => void
 }
 
-export const ResultsTable = ({ results, isLoading }: ResultsTableProps) => {
+export const ResultsTable = ({
+  results,
+  isLoading,
+  graphMetadata,
+  onCreateGraph
+}: ResultsTableProps) => {
   const { toast } = useToast()
 
   const copyCSV = () => {
@@ -84,6 +93,25 @@ export const ResultsTable = ({ results, isLoading }: ResultsTableProps) => {
           </Badge>
         </div>
         <div className="flex items-center space-x-2">
+          {!graphMetadata && onCreateGraph && (
+            <GraphEditDialog
+              data={results}
+              currentMetadata={null}
+              onSave={onCreateGraph}
+              triggerText=""
+              renderTrigger={(onClick) => (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="text-[10px] cursor-pointer"
+                  onClick={onClick}
+                >
+                  <BarChart3 className="size-2" />
+                  Graph
+                </Button>
+              )}
+            />
+          )}
           <Button
             variant="secondary"
             size="sm"

@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Settings2, Plus, X } from 'lucide-react'
+import type { ReactNode } from 'react'
+import { Settings2, X } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -17,22 +18,32 @@ import { GraphMetadata } from './Graph'
 
 interface GraphEditDialogProps {
   data: any[]
-  currentMetadata: GraphMetadata
-  onSave: (metadata: GraphMetadata) => void
+  currentMetadata: GraphMetadata | null
+  onSave?: (metadata: GraphMetadata) => void
+  triggerText?: string
+  renderTrigger?: (onClick: () => void) => ReactNode
 }
 
-export const GraphEditDialog = ({ data, currentMetadata, onSave }: GraphEditDialogProps) => {
+export const GraphEditDialog = ({
+  data,
+  currentMetadata,
+  onSave,
+  triggerText,
+  renderTrigger
+}: GraphEditDialogProps) => {
   const [open, setOpen] = useState(false)
-  const [xColumn, setXColumn] = useState(currentMetadata.graphXColumn)
-  const [yColumns, setYColumns] = useState<string[]>(currentMetadata.graphYColumns)
+  const [xColumn, setXColumn] = useState(currentMetadata?.graphXColumn || '')
+  const [yColumns, setYColumns] = useState<string[]>(currentMetadata?.graphYColumns || [])
 
   const availableColumns = data.length > 0 ? Object.keys(data[0]) : []
 
   const handleSave = () => {
-    onSave({
-      graphXColumn: xColumn,
-      graphYColumns: yColumns
-    })
+    if (onSave) {
+      onSave({
+        graphXColumn: xColumn,
+        graphYColumns: yColumns
+      })
+    }
     setOpen(false)
   }
 
@@ -47,22 +58,26 @@ export const GraphEditDialog = ({ data, currentMetadata, onSave }: GraphEditDial
   }
 
   const handleCancel = () => {
-    setXColumn(currentMetadata.graphXColumn)
-    setYColumns(currentMetadata.graphYColumns)
+    setXColumn(currentMetadata?.graphXColumn || '')
+    setYColumns(currentMetadata?.graphYColumns || [])
     setOpen(false)
   }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="ml-auto">
-          <Settings2 className="h-4 w-4 mr-2" />
-          Edit Graph
-        </Button>
+        {renderTrigger ? (
+          renderTrigger(() => setOpen(true))
+        ) : (
+          <Button variant="outline" size="sm" className="ml-auto">
+            <Settings2 className="h-4 w-4 mr-2" />
+            {triggerText || 'Edit Graph'}
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Edit Graph Configuration</DialogTitle>
+          <DialogTitle>{currentMetadata ? 'Edit Graph Configuration' : 'Create Graph'}</DialogTitle>
           <DialogDescription>
             Choose which columns to use for the X and Y axes of your graph.
           </DialogDescription>
