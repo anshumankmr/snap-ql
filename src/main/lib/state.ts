@@ -21,7 +21,6 @@ const settingsSchema = z.object({
   openAiKey: z.string().optional(),
   openAiBaseUrl: z.string().optional(),
   openAiModel: z.string().optional(),
-  queryHistory: z.array(queryHistorySchema).optional(),
   promptExtension: z.string().optional()
 })
 
@@ -30,7 +29,6 @@ const defaultSettings: z.infer<typeof settingsSchema> = {
   openAiKey: undefined,
   openAiBaseUrl: undefined,
   openAiModel: undefined,
-  queryHistory: [],
   promptExtension: undefined
 }
 
@@ -42,6 +40,12 @@ async function settingsPath() {
   const root = rootDir()
   await fs.ensureDir(root)
   return `${root}/settings.json`
+}
+
+async function historyPath() {
+  const root = rootDir()
+  await fs.ensureDir(root)
+  return `${root}/history.json`
 }
 
 async function getSettings(): Promise<z.infer<typeof settingsSchema>> {
@@ -63,6 +67,59 @@ async function getSettings(): Promise<z.infer<typeof settingsSchema>> {
 async function setSettings(settings: z.infer<typeof settingsSchema>) {
   const path = await settingsPath()
   await fs.writeJson(path, settings)
+}
+
+async function getHistory(): Promise<z.infer<typeof queryHistorySchema>[]> {
+  await migrateHistoryFromSettings()
+
+  const path = await historyPath()
+  let history
+  try {
+    history = await fs.readJson(path)
+    history = z.array(queryHistorySchema).parse(history)
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      console.error(error.message)
+    }
+    history = []
+    await fs.writeJson(path, history)
+  }
+  return history
+}
+
+async function setHistory(history: z.infer<typeof queryHistorySchema>[]) {
+  const path = await historyPath()
+  await fs.writeJson(path, history)
+}
+
+// Migrates history from settings.json to history.json (to support pre 7 july 2025)
+async function migrateHistoryFromSettings() {
+  const settingsFile = await settingsPath()
+  const historyFile = await historyPath()
+
+  // Check if history file already exists
+  if (await fs.pathExists(historyFile)) {
+    return
+  }
+
+  // Check if settings file exists and contains history
+  if (await fs.pathExists(settingsFile)) {
+    try {
+      const settingsData = await fs.readJson(settingsFile)
+      if (settingsData.queryHistory && Array.isArray(settingsData.queryHistory)) {
+        // Migrate history to new file
+        await fs.writeJson(historyFile, settingsData.queryHistory)
+
+        // Remove history from settings
+        delete settingsData.queryHistory
+        await fs.writeJson(settingsFile, settingsData)
+
+        console.log('Migrated query history from settings.json to history.json')
+      }
+    } catch (error) {
+      console.error('Error migrating history:', error)
+    }
+  }
 }
 
 export async function getConnectionString() {
@@ -110,22 +167,17 @@ export async function setOpenAiModel(openAiModel: string) {
 }
 
 export async function getQueryHistory() {
-  const settings = await getSettings()
-  return settings.queryHistory || []
+  return await getHistory()
 }
 
 export async function setQueryHistory(queryHistory: z.infer<typeof queryHistorySchema>[]) {
-  const settings = await getSettings()
-  settings.queryHistory = queryHistory
-  await setSettings(settings)
+  await setHistory(queryHistory)
 }
 
 export async function addQueryToHistory(query: z.infer<typeof queryHistorySchema>) {
-  const settings = await getSettings()
-  const currentHistory = settings.queryHistory || []
+  const currentHistory = await getHistory()
   const newHistory = [query, ...currentHistory.slice(0, 19)] // Keep last 20 queries
-  settings.queryHistory = newHistory
-  await setSettings(settings)
+  await setHistory(newHistory)
 }
 
 export async function getPromptExtension() {

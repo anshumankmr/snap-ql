@@ -1,5 +1,5 @@
 import pg from 'pg'
-import mysql from 'mysql2/promise';
+import mysql from 'mysql2/promise'
 
 // check if it is a valid postgres or mysql connection string. testing only the first part of the connection string.
 // e.g.:

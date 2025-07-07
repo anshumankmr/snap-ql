@@ -81,13 +81,7 @@ export const Graph = ({ data, graphMetadata }: GraphProps) => {
         {graphMetadata?.graphYColumns.map((column, i) => {
           const color = orangeColors[i % orangeColors.length]
           return (
-            <Line
-              key={column}
-              type="monotone"
-              dataKey={column}
-              stroke={color}
-              strokeWidth={3}
-            />
+            <Line key={column} type="monotone" dataKey={column} stroke={color} strokeWidth={3} />
           )
         })}
       </LineChart>

@@ -423,7 +423,6 @@ export const Settings = () => {
           </div>
         </CardContent>
       </Card>
-
     </div>
   )
 }
