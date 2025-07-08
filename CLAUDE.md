@@ -14,6 +14,11 @@ npm run lint            # ESLint checking
 npm run format          # Prettier formatting
 npm run typecheck       # TypeScript type checking (both node and web)
 
+# Testing
+npm test                # Run unit tests for main process
+npm run test:watch      # Run tests in watch mode
+npm run test:coverage   # Run tests with coverage report
+
 # Building
 npm run build           # Full production build with type checking
 npm run build:mac       # Build macOS distribution
@@ -64,3 +69,22 @@ npm run build:unpack    # Build without packaging for testing
 - Settings auto-saved to `~/SnapQL/settings.json`
 - Query history stored (last 20 queries)
 - Cross-platform builds supported (macOS, Windows, Linux)
+
+### Testing
+
+- **Jest** configured for unit testing main process code
+- Tests located in `src/main/__tests__/`
+- Isolated from Electron environment for pure Node.js testing
+- TypeScript support with ts-jest preprocessor
+
+### Development Warnings
+
+- Don't run "npm run dev" to test
+
+### Development Best Practices
+
+- When working on end-user features make sure to update README.md when relevant
+
+### AI Interaction Guidelines
+
+- Always generate an implementation plan and ask me to confirm before proceeding to implementation
