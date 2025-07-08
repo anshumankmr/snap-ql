@@ -307,7 +307,6 @@ export const Settings = () => {
             </Label>
             <Input
               id="connection-string"
-              type="password"
               value={connectionString}
               onChange={(e) => setConnectionString(e.target.value)}
               placeholder="postgresql://username:password@hostname:port/database"
