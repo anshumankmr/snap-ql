@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Settings2, X } from 'lucide-react'
 import {
@@ -34,6 +34,11 @@ export const GraphEditDialog = ({
   const [open, setOpen] = useState(false)
   const [xColumn, setXColumn] = useState(currentMetadata?.graphXColumn || '')
   const [yColumns, setYColumns] = useState<string[]>(currentMetadata?.graphYColumns || [])
+
+  useEffect(() => {
+    setXColumn(currentMetadata?.graphXColumn || '')
+    setYColumns(currentMetadata?.graphYColumns || [])
+  }, [currentMetadata])
 
   const availableColumns = data.length > 0 ? Object.keys(data[0]) : []
 
