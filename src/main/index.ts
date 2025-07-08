@@ -30,7 +30,11 @@ import {
   getClaudeApiKey,
   setClaudeApiKey,
   getClaudeModel,
-  setClaudeModel
+  setClaudeModel,
+  getFavorites,
+  addFavorite,
+  removeFavorite,
+  updateFavorite
 } from './lib/state'
 import { homedir } from 'os'
 import { generateQuery } from './lib/ai'
@@ -286,6 +290,47 @@ app.whenReady().then(() => {
       return true
     } catch (error: any) {
       console.error('Error updating query history:', error)
+      return false
+    }
+  })
+
+  // Favorites Handlers
+  ipcMain.handle('getFavorites', async () => {
+    try {
+      const favorites = await getFavorites()
+      return favorites
+    } catch (error: any) {
+      console.error('Error loading favorites:', error)
+      return []
+    }
+  })
+
+  ipcMain.handle('addFavorite', async (_, favorite) => {
+    try {
+      await addFavorite(favorite)
+      return true
+    } catch (error: any) {
+      console.error('Error adding favorite:', error)
+      return false
+    }
+  })
+
+  ipcMain.handle('removeFavorite', async (_, favoriteId) => {
+    try {
+      await removeFavorite(favoriteId)
+      return true
+    } catch (error: any) {
+      console.error('Error removing favorite:', error)
+      return false
+    }
+  })
+
+  ipcMain.handle('updateFavorite', async (_, favoriteId, updates) => {
+    try {
+      await updateFavorite(favoriteId, updates)
+      return true
+    } catch (error: any) {
+      console.error('Error updating favorite:', error)
       return false
     }
   })

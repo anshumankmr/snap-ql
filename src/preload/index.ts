@@ -26,6 +26,12 @@ try {
       await ipcRenderer.invoke('addQueryToHistory', queryEntry),
     updateQueryHistory: async (queryId: string, updates: any) =>
       await ipcRenderer.invoke('updateQueryHistory', queryId, updates),
+    getFavorites: async () => await ipcRenderer.invoke('getFavorites'),
+    addFavorite: async (favorite: any) => await ipcRenderer.invoke('addFavorite', favorite),
+    removeFavorite: async (favoriteId: string) =>
+      await ipcRenderer.invoke('removeFavorite', favoriteId),
+    updateFavorite: async (favoriteId: string, updates: any) =>
+      await ipcRenderer.invoke('updateFavorite', favoriteId, updates),
     getPromptExtension: async () => await ipcRenderer.invoke('getPromptExtension'),
     setPromptExtension: async (promptExtension: string) =>
       await ipcRenderer.invoke('setPromptExtension', promptExtension),

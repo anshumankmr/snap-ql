@@ -24,6 +24,10 @@ declare global {
       getQueryHistory: () => Promise<any[]>
       addQueryToHistory: (queryEntry: any) => Promise<boolean>
       updateQueryHistory: (queryId: string, updates: any) => Promise<boolean>
+      getFavorites: () => Promise<any[]>
+      addFavorite: (favorite: any) => Promise<boolean>
+      removeFavorite: (favoriteId: string) => Promise<boolean>
+      updateFavorite: (favoriteId: string, updates: any) => Promise<boolean>
       getPromptExtension: () => Promise<string>
       setPromptExtension: (promptExtension: string) => Promise<boolean>
       getAiProvider: () => Promise<'openai' | 'claude'>

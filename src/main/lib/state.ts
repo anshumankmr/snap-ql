@@ -16,6 +16,19 @@ const queryHistorySchema = z.object({
   timestamp: z.string() // ISO string format
 })
 
+const favoritesSchema = z.object({
+  id: z.string(),
+  query: z.string(),
+  results: z.array(z.any()),
+  graph: z
+    .object({
+      graphXColumn: z.string(),
+      graphYColumns: z.array(z.string())
+    })
+    .optional(),
+  timestamp: z.string() // ISO string format
+})
+
 const settingsSchema = z.object({
   connectionString: z.string().optional(),
   aiProvider: z.enum(['openai', 'claude']).optional(),
@@ -52,6 +65,12 @@ async function historyPath() {
   const root = rootDir()
   await fs.ensureDir(root)
   return `${root}/history.json`
+}
+
+async function favoritesPath() {
+  const root = rootDir()
+  await fs.ensureDir(root)
+  return `${root}/favorites.json`
 }
 
 async function getSettings(): Promise<z.infer<typeof settingsSchema>> {
@@ -195,6 +214,63 @@ export async function updateQueryHistory(
     query.id === queryId ? { ...query, ...updates } : query
   )
   await setHistory(updatedHistory)
+}
+
+// Favorites management
+async function getFavoritesData() {
+  try {
+    const path = await favoritesPath()
+    const exists = await fs.pathExists(path)
+    if (!exists) {
+      return []
+    }
+    const data = await fs.readJson(path)
+    const parsed = z.array(favoritesSchema).safeParse(data)
+    if (!parsed.success) {
+      console.error('Invalid favorites data:', parsed.error)
+      return []
+    }
+    return parsed.data
+  } catch (error) {
+    console.error('Error reading favorites:', error)
+    return []
+  }
+}
+
+async function setFavoritesData(favorites: z.infer<typeof favoritesSchema>[]) {
+  try {
+    const path = await favoritesPath()
+    await fs.writeJson(path, favorites, { spaces: 2 })
+  } catch (error) {
+    console.error('Error writing favorites:', error)
+  }
+}
+
+export async function getFavorites() {
+  return await getFavoritesData()
+}
+
+export async function addFavorite(favorite: z.infer<typeof favoritesSchema>) {
+  const currentFavorites = await getFavoritesData()
+  const newFavorites = [favorite, ...currentFavorites]
+  await setFavoritesData(newFavorites)
+}
+
+export async function removeFavorite(favoriteId: string) {
+  const currentFavorites = await getFavoritesData()
+  const newFavorites = currentFavorites.filter((fav) => fav.id !== favoriteId)
+  await setFavoritesData(newFavorites)
+}
+
+export async function updateFavorite(
+  favoriteId: string,
+  updates: Partial<z.infer<typeof favoritesSchema>>
+) {
+  const currentFavorites = await getFavoritesData()
+  const updatedFavorites = currentFavorites.map((favorite) =>
+    favorite.id === favoriteId ? { ...favorite, ...updates } : favorite
+  )
+  await setFavoritesData(updatedFavorites)
 }
 
 export async function getPromptExtension() {

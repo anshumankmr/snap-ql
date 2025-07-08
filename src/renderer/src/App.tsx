@@ -30,6 +30,7 @@ const Index = () => {
   const [queryResults, setQueryResults] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [queryHistory, setQueryHistory] = useState<QueryHistory[]>([])
+  const [favorites, setFavorites] = useState<QueryHistory[]>([])
   const [currentHistoryItemId, setCurrentHistoryItemId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
@@ -38,22 +39,32 @@ const Index = () => {
 
   const graphableData = queryResults.slice(0, 10000) // limit to 10k rows for performance
 
-  // Load query history on startup
+  // Load query history and favorites on startup
   useEffect(() => {
-    const loadQueryHistory = async () => {
+    const loadData = async () => {
       try {
-        const history = await window.context.getQueryHistory()
+        const [history, favoritesData] = await Promise.all([
+          window.context.getQueryHistory(),
+          window.context.getFavorites()
+        ])
+
         // Convert timestamp strings back to Date objects
         const historyWithDates = history.map((item: any) => ({
           ...item,
           timestamp: new Date(item.timestamp)
         }))
         setQueryHistory(historyWithDates)
+
+        const favoritesWithDates = favoritesData.map((item: any) => ({
+          ...item,
+          timestamp: new Date(item.timestamp)
+        }))
+        setFavorites(favoritesWithDates)
       } catch (error) {
-        console.error('Failed to load query history:', error)
+        console.error('Failed to load data:', error)
       }
     }
-    loadQueryHistory()
+    loadData()
   }, [])
 
   const runQuery = async (query: string) => {
@@ -148,20 +159,27 @@ const Index = () => {
   const handleGraphMetadataChange = async (newMetadata: GraphMetadata) => {
     setGraphMetadata(newMetadata)
 
-    // Update the current history item if one is selected
+    // Update the current item if one is selected
     if (currentHistoryItemId) {
-      // Update local state
-      setQueryHistory((prev) =>
-        prev.map((item) =>
-          item.id === currentHistoryItemId ? { ...item, graph: newMetadata } : item
-        )
-      )
+      // Check if it's a favorite first
+      const isFavorite = favorites.some((fav) => fav.id === currentHistoryItemId)
 
-      // Persist to storage
-      try {
-        await window.context.updateQueryHistory(currentHistoryItemId, { graph: newMetadata })
-      } catch (error) {
-        console.error('Failed to update query history:', error)
+      if (isFavorite) {
+        await handleFavoriteMetadataChange(currentHistoryItemId, newMetadata)
+      } else {
+        // Update local history state
+        setQueryHistory((prev) =>
+          prev.map((item) =>
+            item.id === currentHistoryItemId ? { ...item, graph: newMetadata } : item
+          )
+        )
+
+        // Persist to storage
+        try {
+          await window.context.updateQueryHistory(currentHistoryItemId, { graph: newMetadata })
+        } catch (error) {
+          console.error('Failed to update query history:', error)
+        }
       }
     }
   }
@@ -187,6 +205,51 @@ const Index = () => {
     }
   }
 
+  const handleAddToFavorites = async (historyItem: QueryHistory) => {
+    try {
+      const favoriteEntry = {
+        ...historyItem,
+        timestamp: historyItem.timestamp.toISOString()
+      }
+      await window.context.addFavorite(favoriteEntry)
+
+      // Update local favorites state
+      setFavorites((prev) => [historyItem, ...prev])
+    } catch (error) {
+      console.error('Failed to add to favorites:', error)
+    }
+  }
+
+  const handleRemoveFromFavorites = async (favoriteId: string) => {
+    try {
+      await window.context.removeFavorite(favoriteId)
+
+      // Update local favorites state
+      setFavorites((prev) => prev.filter((fav) => fav.id !== favoriteId))
+    } catch (error) {
+      console.error('Failed to remove from favorites:', error)
+    }
+  }
+
+  const handleFavoriteMetadataChange = async (favoriteId: string, newMetadata: GraphMetadata) => {
+    // Update current state if this is the active item
+    if (currentHistoryItemId === favoriteId) {
+      setGraphMetadata(newMetadata)
+    }
+
+    // Update local favorites state
+    setFavorites((prev) =>
+      prev.map((item) => (item.id === favoriteId ? { ...item, graph: newMetadata } : item))
+    )
+
+    // Persist to storage
+    try {
+      await window.context.updateFavorite(favoriteId, { graph: newMetadata })
+    } catch (error) {
+      console.error('Failed to update favorite:', error)
+    }
+  }
+
   return (
     <ThemeProvider defaultTheme="dark" storageKey="ui-theme">
       <div className="min-h-screen bg-background flex">
@@ -194,7 +257,10 @@ const Index = () => {
           currentView={currentView}
           onViewChange={setCurrentView}
           queryHistory={queryHistory}
+          favorites={favorites}
           onHistorySelect={handleHistorySelect}
+          onAddToFavorites={handleAddToFavorites}
+          onRemoveFromFavorites={handleRemoveFromFavorites}
         />
 
         <div className="flex-1 flex flex-col min-w-0">
