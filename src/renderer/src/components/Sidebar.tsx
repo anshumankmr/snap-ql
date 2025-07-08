@@ -14,7 +14,7 @@ interface SidebarProps {
   onViewChange: (view: 'editor' | 'settings') => void
   queryHistory: QueryHistory[]
   favorites: QueryHistory[]
-  onHistorySelect: (historyItem: QueryHistory) => void
+  onItemSelect: (item: QueryHistory) => void
   onAddToFavorites: (historyItem: QueryHistory) => void
   onRemoveFromFavorites: (favoriteId: string) => void
 }
@@ -24,7 +24,7 @@ export const Sidebar = ({
   onViewChange,
   queryHistory,
   favorites,
-  onHistorySelect,
+  onItemSelect,
   onAddToFavorites,
   onRemoveFromFavorites
 }: SidebarProps) => {
@@ -105,7 +105,7 @@ export const Sidebar = ({
                 {favorites.map((item) => (
                   <button
                     key={item.id}
-                    onClick={() => onHistorySelect(item)}
+                    onClick={() => onItemSelect(item)}
                     className="w-full text-left p-2 rounded-md hover:bg-muted/50 transition-colors group relative"
                   >
                     <div className="space-y-1">
@@ -159,7 +159,7 @@ export const Sidebar = ({
                   return (
                     <button
                       key={item.id}
-                      onClick={() => onHistorySelect(item)}
+                      onClick={() => onItemSelect(item)}
                       className="w-full text-left p-2 rounded-md hover:bg-muted/50 transition-colors group relative"
                     >
                       <div className="space-y-1">

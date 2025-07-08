@@ -83,7 +83,39 @@ const Index = () => {
           duration: 1500
         })
 
-        // Add to history
+        // Check if the currently selected item is a favorite
+        const currentFavorite = currentHistoryItemId
+          ? favorites.find((fav) => fav.id === currentHistoryItemId)
+          : null
+
+        if (currentFavorite) {
+          // Update the favorite with new results and timestamp
+          const updatedFavorite = {
+            ...currentFavorite,
+            results: res.data,
+            query: query,
+            timestamp: new Date(),
+            graph: graphMetadata ?? undefined
+          }
+
+          // Update local favorites state
+          setFavorites((prev) =>
+            prev.map((fav) => (fav.id === currentFavorite.id ? updatedFavorite : fav))
+          )
+
+          // Persist favorite update to storage
+          try {
+            const favoriteEntryForStorage = {
+              ...updatedFavorite,
+              timestamp: updatedFavorite.timestamp.toISOString()
+            }
+            await window.context.updateFavorite(currentFavorite.id, favoriteEntryForStorage)
+          } catch (error) {
+            console.error('Failed to update favorite:', error)
+          }
+        }
+
+        // Always add to history (whether it's a favorite or not)
         const historyEntry: QueryHistory = {
           id: Date.now().toString(),
           query: query,
@@ -94,7 +126,11 @@ const Index = () => {
 
         // Update local state
         setQueryHistory((prev) => [historyEntry, ...prev.slice(0, 19)]) // Keep last 20 queries
-        setCurrentHistoryItemId(historyEntry.id)
+
+        // If we updated a favorite, keep the favorite ID as current, otherwise use the new history entry ID
+        if (!currentFavorite) {
+          setCurrentHistoryItemId(historyEntry.id)
+        }
 
         // Persist to storage
         try {
@@ -149,11 +185,11 @@ const Index = () => {
     }
   }
 
-  const handleHistorySelect = (historyItem: QueryHistory) => {
-    setSqlQuery(historyItem.query)
-    setQueryResults(historyItem.results)
-    setGraphMetadata(historyItem.graph ?? null)
-    setCurrentHistoryItemId(historyItem.id)
+  const handleItemSelect = (item: QueryHistory) => {
+    setSqlQuery(item.query)
+    setQueryResults(item.results)
+    setGraphMetadata(item.graph ?? null)
+    setCurrentHistoryItemId(item.id)
   }
 
   const handleGraphMetadataChange = async (newMetadata: GraphMetadata) => {
@@ -258,7 +294,7 @@ const Index = () => {
           onViewChange={setCurrentView}
           queryHistory={queryHistory}
           favorites={favorites}
-          onHistorySelect={handleHistorySelect}
+          onItemSelect={handleItemSelect}
           onAddToFavorites={handleAddToFavorites}
           onRemoveFromFavorites={handleRemoveFromFavorites}
         />
