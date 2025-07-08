@@ -10,21 +10,6 @@ jobs:
   integration-tests:
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_USER: postgres
-          POSTGRES_DB: snapql_test
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
     strategy:
       matrix:
         node-version: [18.x, 20.x]
@@ -49,20 +34,6 @@ jobs:
 
       - name: Run integration tests
         run: npm test
-        env:
-          # Set test database connection for any tests that need it
-          TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/snapql_test
 
       - name: Run tests with coverage
         run: npm run test:coverage
-        env:
-          TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/snapql_test
-
-      - name: Upload coverage reports
-        uses: codecov/codecov-action@v4
-        with:
-          file: ./coverage/lcov.info
-          flags: integration-tests
-          name: integration-tests-${{ matrix.node-version }}
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
