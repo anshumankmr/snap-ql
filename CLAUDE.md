@@ -35,6 +35,7 @@ npm run build:unpack    # Build without packaging for testing
 ### Key Files
 
 - `src/main/lib/db.ts` - Database operations and AI query generation logic
+- `src/main/lib/ai.ts` - Query generation logic
 - `src/main/lib/state.ts` - Settings management (stored in `~/SnapQL/settings.json`)
 - `src/renderer/src/App.tsx` - Main React application component
 - `src/renderer/src/components/` - UI components (AIChat, SQLEditor, ResultsTable, Settings)
@@ -47,13 +48,7 @@ npm run build:unpack    # Build without packaging for testing
 - **CodeMirror** for SQL syntax highlighting
 - **OpenAI SDK** + **Vercel AI SDK** for AI query generation
 - **PostgreSQL** (pg client) for database connectivity
-
-### AI Integration
-
-- Uses OpenAI GPT models (default: gpt-4o) for schema-aware SQL generation
-- Supports custom OpenAI base URLs and models
-- Generates queries using database schema context (tables, columns, relationships)
-- Structured output validation using Zod schemas
+- **ShadCN/UI** as the UI/UX framework
 
 ### Security Architecture
 

@@ -31,7 +31,7 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [queryHistory, setQueryHistory] = useState<QueryHistory[]>([])
   const [favorites, setFavorites] = useState<QueryHistory[]>([])
-  const [currentHistoryItemId, setCurrentHistoryItemId] = useState<string | null>(null)
+  const [currentItemId, setCurrentItemId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
 
@@ -84,8 +84,8 @@ const Index = () => {
         })
 
         // Check if the currently selected item is a favorite
-        const currentFavorite = currentHistoryItemId
-          ? favorites.find((fav) => fav.id === currentHistoryItemId)
+        const currentFavorite = currentItemId
+          ? favorites.find((fav) => fav.id === currentItemId)
           : null
 
         if (currentFavorite) {
@@ -129,7 +129,7 @@ const Index = () => {
 
         // If we updated a favorite, keep the favorite ID as current, otherwise use the new history entry ID
         if (!currentFavorite) {
-          setCurrentHistoryItemId(historyEntry.id)
+          setCurrentItemId(historyEntry.id)
         }
 
         // Persist to storage
@@ -189,30 +189,28 @@ const Index = () => {
     setSqlQuery(item.query)
     setQueryResults(item.results)
     setGraphMetadata(item.graph ?? null)
-    setCurrentHistoryItemId(item.id)
+    setCurrentItemId(item.id)
   }
 
   const handleGraphMetadataChange = async (newMetadata: GraphMetadata) => {
     setGraphMetadata(newMetadata)
 
     // Update the current item if one is selected
-    if (currentHistoryItemId) {
+    if (currentItemId) {
       // Check if it's a favorite first
-      const isFavorite = favorites.some((fav) => fav.id === currentHistoryItemId)
+      const isFavorite = favorites.some((fav) => fav.id === currentItemId)
 
       if (isFavorite) {
-        await handleFavoriteMetadataChange(currentHistoryItemId, newMetadata)
+        await handleFavoriteMetadataChange(currentItemId, newMetadata)
       } else {
         // Update local history state
         setQueryHistory((prev) =>
-          prev.map((item) =>
-            item.id === currentHistoryItemId ? { ...item, graph: newMetadata } : item
-          )
+          prev.map((item) => (item.id === currentItemId ? { ...item, graph: newMetadata } : item))
         )
 
         // Persist to storage
         try {
-          await window.context.updateQueryHistory(currentHistoryItemId, { graph: newMetadata })
+          await window.context.updateQueryHistory(currentItemId, { graph: newMetadata })
         } catch (error) {
           console.error('Failed to update query history:', error)
         }
@@ -224,17 +222,17 @@ const Index = () => {
     setGraphMetadata(null)
 
     // Update the current history item if one is selected
-    if (currentHistoryItemId) {
+    if (currentItemId) {
       // Update local state
       setQueryHistory((prev) =>
         prev.map((item) =>
-          item.id === currentHistoryItemId ? { ...item, graph: undefined } : item
+          item.id === currentItemId ? { ...item, graph: undefined } : item
         )
       )
 
       // Persist to storage
       try {
-        await window.context.updateQueryHistory(currentHistoryItemId, { graph: undefined })
+        await window.context.updateQueryHistory(currentItemId, { graph: undefined })
       } catch (error) {
         console.error('Failed to update query history:', error)
       }
@@ -269,7 +267,7 @@ const Index = () => {
 
   const handleFavoriteMetadataChange = async (favoriteId: string, newMetadata: GraphMetadata) => {
     // Update current state if this is the active item
-    if (currentHistoryItemId === favoriteId) {
+    if (currentItemId === favoriteId) {
       setGraphMetadata(newMetadata)
     }
 
