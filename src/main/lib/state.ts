@@ -52,6 +52,10 @@ const defaultSettings: z.infer<typeof settingsSchema> = {
 }
 
 function rootDir() {
+  // Allow tests to override the root directory
+  if (process.env.SNAPQL_TEST_ROOT) {
+    return process.env.SNAPQL_TEST_ROOT
+  }
   return `${homedir()}/SnapQL`
 }
 

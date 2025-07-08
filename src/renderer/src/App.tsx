@@ -225,9 +225,7 @@ const Index = () => {
     if (currentItemId) {
       // Update local state
       setQueryHistory((prev) =>
-        prev.map((item) =>
-          item.id === currentItemId ? { ...item, graph: undefined } : item
-        )
+        prev.map((item) => (item.id === currentItemId ? { ...item, graph: undefined } : item))
       )
 
       // Persist to storage
