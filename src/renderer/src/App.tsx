@@ -284,57 +284,61 @@ const Index = () => {
 
   return (
     <ThemeProvider defaultTheme="dark" storageKey="ui-theme">
-      <div className="min-h-screen bg-background flex">
-        <Sidebar
-          currentView={currentView}
-          onViewChange={setCurrentView}
-          queryHistory={queryHistory}
-          favorites={favorites}
-          onItemSelect={handleItemSelect}
-          onAddToFavorites={handleAddToFavorites}
-          onRemoveFromFavorites={handleRemoveFromFavorites}
-        />
+      <div className="h-screen bg-background flex overflow-hidden">
+        <div className="flex-shrink-0">
+          <Sidebar
+            currentView={currentView}
+            onViewChange={setCurrentView}
+            queryHistory={queryHistory}
+            favorites={favorites}
+            onItemSelect={handleItemSelect}
+            onAddToFavorites={handleAddToFavorites}
+            onRemoveFromFavorites={handleRemoveFromFavorites}
+          />
+        </div>
 
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
           {/* AI Chat Header */}
           <div className="border-b bg-card p-3 flex-shrink-0">
             <AIChat onUserQuery={handleAIQuery} isGenerating={isGenerating} />
           </div>
 
-          {/* Main Content */}
-          <div className="flex-1 p-3 min-h-0">
-            {currentView === 'editor' ? (
-              <div className="space-y-3 h-full flex flex-col">
-                <div className="flex-shrink-0">
-                  <SQLEditor
-                    value={sqlQuery}
-                    onChange={setSqlQuery}
-                    onRun={() => runQuery(sqlQuery)}
-                    isLoading={isLoading}
-                  />
+          {/* Main Content - Scrollable */}
+          <div className="flex-1 overflow-y-auto">
+            <div className="p-3">
+              {currentView === 'editor' ? (
+                <div className="space-y-3">
+                  <div>
+                    <SQLEditor
+                      value={sqlQuery}
+                      onChange={setSqlQuery}
+                      onRun={() => runQuery(sqlQuery)}
+                      isLoading={isLoading}
+                    />
+                  </div>
+                  {error && <div className="text-red-500">{error}</div>}
+                  {graphMetadata && queryResults.length > 0 && (
+                    <Graph
+                      data={graphableData}
+                      graphMetadata={graphMetadata}
+                      onMetadataChange={handleGraphMetadataChange}
+                      onRemove={handleRemoveGraph}
+                    />
+                  )}
+                  <div>
+                    <ResultsTable
+                      results={queryResults}
+                      isLoading={isLoading}
+                      query={sqlQuery}
+                      graphMetadata={graphMetadata}
+                      onCreateGraph={handleGraphMetadataChange}
+                    />
+                  </div>
                 </div>
-                {error && <div className="text-red-500">{error}</div>}
-                {graphMetadata && queryResults.length > 0 && (
-                  <Graph
-                    data={graphableData}
-                    graphMetadata={graphMetadata}
-                    onMetadataChange={handleGraphMetadataChange}
-                    onRemove={handleRemoveGraph}
-                  />
-                )}
-                <div className="flex-1 min-h-0 flex-grow">
-                  <ResultsTable
-                    results={queryResults}
-                    isLoading={isLoading}
-                    query={sqlQuery}
-                    graphMetadata={graphMetadata}
-                    onCreateGraph={handleGraphMetadataChange}
-                  />
-                </div>
-              </div>
-            ) : (
-              <Settings />
-            )}
+              ) : (
+                <Settings />
+              )}
+            </div>
           </div>
         </div>
 

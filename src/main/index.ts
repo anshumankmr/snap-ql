@@ -42,49 +42,7 @@ import {
   setConnectionPromptExtension,
   getConnectionStringForConnection
 } from './lib/state'
-import { homedir } from 'os'
 import { generateQuery } from './lib/ai'
-
-function createMenu(): void {
-  const template: MenuItemConstructorOptions[] = [
-    {
-      label: 'File',
-      submenu: [
-        {
-          label: 'Open Settings Folder',
-          click: () => {
-            const settingsPath = `${homedir()}/SnapQL`
-            shell.openPath(settingsPath)
-          }
-        },
-        { type: 'separator' },
-        process.platform === 'darwin'
-          ? { label: 'Quit SnapQL', accelerator: 'CmdOrCtrl+Q', click: () => app.quit() }
-          : { label: 'Exit', accelerator: 'CmdOrCtrl+Q', click: () => app.quit() }
-      ]
-    }
-  ]
-
-  if (process.platform === 'darwin') {
-    template.unshift({
-      label: app.getName(),
-      submenu: [
-        { label: 'About SnapQL', role: 'about' },
-        { type: 'separator' },
-        { label: 'Services', role: 'services', submenu: [] },
-        { type: 'separator' },
-        { label: 'Hide SnapQL', accelerator: 'Command+H', role: 'hide' },
-        { label: 'Hide Others', accelerator: 'Command+Shift+H', role: 'hideOthers' },
-        { label: 'Show All', role: 'unhide' },
-        { type: 'separator' },
-        { label: 'Quit', accelerator: 'Command+Q', click: () => app.quit() }
-      ]
-    })
-  }
-
-  const menu = Menu.buildFromTemplate(template)
-  Menu.setApplicationMenu(menu)
-}
 
 function createWindow(): void {
   // Create the browser window.

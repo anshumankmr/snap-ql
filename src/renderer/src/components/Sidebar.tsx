@@ -1,4 +1,4 @@
-import { Database, Settings as SettingsIcon, Code, History, Clock, Zap, Star } from 'lucide-react'
+import { Database, Settings as SettingsIcon, History, Clock, Zap, Star, Plus, Pencil } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ScrollArea } from '@/components/ui/scroll-area'
 
@@ -28,19 +28,6 @@ export const Sidebar = ({
   onAddToFavorites,
   onRemoveFromFavorites
 }: SidebarProps) => {
-  const menuItems = [
-    {
-      id: 'editor' as const,
-      label: 'Query Editor',
-      icon: Code
-    },
-    {
-      id: 'settings' as const,
-      label: 'Settings',
-      icon: SettingsIcon
-    }
-  ]
-
   const formatTimestamp = (timestamp: Date) => {
     const now = new Date()
     const diff = now.getTime() - timestamp.getTime()
@@ -59,8 +46,8 @@ export const Sidebar = ({
   }
 
   return (
-    <div className="w-56 bg-card border-r border-border flex flex-col">
-      <div className="p-3 border-b border-border">
+    <div className="w-56 bg-card border-r border-border flex flex-col h-screen">
+      <div className="p-3 border-b border-border flex-shrink-0">
         <div className="flex items-center space-x-2">
           <Zap className="w-4 h-4 text-primary" />
           <h1 className="text-sm font-semibold">SnapQL</h1>
@@ -68,41 +55,75 @@ export const Sidebar = ({
         </div>
       </div>
 
-      <nav className="p-2 border-b border-border">
-        <ul className="space-y-0.5">
-          {menuItems.map((item) => (
-            <li key={item.id}>
-              <button
-                onClick={() => onViewChange(item.id)}
-                className={cn(
-                  'w-full flex items-center space-x-2 px-2 py-1.5 rounded-md text-xs font-medium transition-colors',
-                  currentView === item.id
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                )}
-              >
-                <item.icon className="w-3.5 h-3.5" />
-                <span>{item.label}</span>
-              </button>
-            </li>
-          ))}
+      {/* Connections Section */}
+      <div className="flex-shrink-0">
+        <div className="p-2 border-b border-border">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Database className="w-3.5 h-3.5 text-muted-foreground" />
+              <span className="text-xs font-medium text-muted-foreground">Connections</span>
+            </div>
+            <button className="text-muted-foreground hover:text-foreground transition-colors">
+              <Plus className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+        <ul className="p-2 space-y-0.5 border-b border-border">
+          {/* Mockup connection buttons */}
+          <li>
+            <button
+              className="w-full flex items-center space-x-2 px-2 py-1.5 rounded-md text-xs font-medium transition-colors text-foreground hover:bg-muted group relative"
+            >
+              <div className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />
+              <span className="truncate">Production DB</span>
+              <Pencil className="w-3 h-3 absolute right-2 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground transition-all" />
+            </button>
+          </li>
+          <li>
+            <button
+              className="w-full flex items-center space-x-2 px-2 py-1.5 rounded-md text-xs font-medium transition-colors text-foreground hover:bg-muted group relative"
+            >
+              <div className="w-2 h-2 rounded-full bg-orange-500 flex-shrink-0 animate-pulse" />
+              <span className="truncate">Staging DB</span>
+              <Pencil className="w-3 h-3 absolute right-2 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground transition-all" />
+            </button>
+          </li>
+          <li>
+            <button
+              className="w-full flex items-center space-x-2 px-2 py-1.5 rounded-md text-xs font-medium transition-colors text-foreground hover:bg-muted group relative"
+            >
+              <div className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0" />
+              <span className="truncate">Local Development</span>
+              <Pencil className="w-3 h-3 absolute right-2 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground transition-all" />
+            </button>
+          </li>
+          {/* Add Database button */}
+          <li className="pt-1">
+            <button
+              className="w-full flex items-center justify-center space-x-2 px-2 py-2 rounded-md text-xs font-medium transition-colors border border-dashed border-muted-foreground/50 text-muted-foreground hover:text-foreground hover:border-foreground"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add Database</span>
+            </button>
+          </li>
         </ul>
-      </nav>
+      </div>
 
-      <div className="flex-1 flex flex-col min-h-0">
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         {/* Favorites Section */}
         {favorites.length > 0 && (
           <>
-            <div className="p-2 border-b border-border">
+            <div className="p-2 border-b border-border flex-shrink-0">
               <div className="flex items-center space-x-2">
                 <Star className="w-3.5 h-3.5 text-yellow-500" />
                 <span className="text-xs font-medium text-muted-foreground">Favorites</span>
               </div>
             </div>
 
-            <div className="p-2 border-b border-border">
-              <div className="space-y-1">
-                {favorites.map((item) => (
+            <div className="p-2 border-b border-border flex-shrink-0">
+              <ScrollArea className="max-h-32">
+                <div className="space-y-1">
+                  {favorites.map((item) => (
                   <button
                     key={item.id}
                     onClick={() => onItemSelect(item)}
@@ -132,14 +153,15 @@ export const Sidebar = ({
                       <Star className="w-3 h-3 fill-current" />
                     </button>
                   </button>
-                ))}
-              </div>
+                  ))}
+                </div>
+              </ScrollArea>
             </div>
           </>
         )}
 
         {/* History Section */}
-        <div className="p-2 border-b border-border">
+        <div className="p-2 border-b border-border flex-shrink-0">
           <div className="flex items-center space-x-2">
             <History className="w-3.5 h-3.5 text-muted-foreground" />
             <span className="text-xs font-medium text-muted-foreground">Query History</span>
@@ -194,6 +216,22 @@ export const Sidebar = ({
             )}
           </div>
         </ScrollArea>
+      </div>
+
+      {/* Settings button - sticky at bottom */}
+      <div className="p-2 border-t border-border flex-shrink-0">
+        <button
+          onClick={() => onViewChange('settings')}
+          className={cn(
+            'w-full flex items-center space-x-2 px-2 py-1.5 rounded-md text-xs font-medium transition-colors',
+            currentView === 'settings'
+              ? 'bg-primary text-primary-foreground'
+              : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+          )}
+        >
+          <SettingsIcon className="w-3.5 h-3.5" />
+          <span>Settings</span>
+        </button>
       </div>
     </div>
   )
