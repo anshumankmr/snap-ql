@@ -43,7 +43,34 @@ try {
       await ipcRenderer.invoke('setClaudeApiKey', claudeApiKey),
     getClaudeModel: async () => await ipcRenderer.invoke('getClaudeModel'),
     setClaudeModel: async (claudeModel: string) =>
-      await ipcRenderer.invoke('setClaudeModel', claudeModel)
+      await ipcRenderer.invoke('setClaudeModel', claudeModel),
+
+    // Connection management
+    createConnection: async (name: string, connectionMetadata: any) =>
+      await ipcRenderer.invoke('createConnection', name, connectionMetadata),
+    editConnection: async (name: string, connectionMetadata: any) =>
+      await ipcRenderer.invoke('editConnection', name, connectionMetadata),
+    listConnections: async () => await ipcRenderer.invoke('listConnections'),
+    getConnection: async (name: string) => await ipcRenderer.invoke('getConnection', name),
+    deleteConnection: async (name: string) => await ipcRenderer.invoke('deleteConnection', name),
+    getConnectionHistory: async (name: string) =>
+      await ipcRenderer.invoke('getConnectionHistory', name),
+    addQueryToConnectionHistory: async (name: string, queryEntry: any) =>
+      await ipcRenderer.invoke('addQueryToConnectionHistory', name, queryEntry),
+    getConnectionFavorites: async (name: string) =>
+      await ipcRenderer.invoke('getConnectionFavorites', name),
+    addConnectionFavorite: async (name: string, favorite: any) =>
+      await ipcRenderer.invoke('addConnectionFavorite', name, favorite),
+    removeConnectionFavorite: async (name: string, favoriteId: string) =>
+      await ipcRenderer.invoke('removeConnectionFavorite', name, favoriteId),
+    getConnectionPromptExtension: async (name: string) =>
+      await ipcRenderer.invoke('getConnectionPromptExtension', name),
+    setConnectionPromptExtension: async (name: string, promptExtension: string) =>
+      await ipcRenderer.invoke('setConnectionPromptExtension', name, promptExtension),
+    runQueryForConnection: async (name: string, query: string) =>
+      await ipcRenderer.invoke('runQueryForConnection', name, query),
+    generateQueryForConnection: async (name: string, input: string, existingQuery: string) =>
+      await ipcRenderer.invoke('generateQueryForConnection', name, input, existingQuery)
   })
 } catch (error) {
   console.error(error)

@@ -26,7 +26,21 @@ import {
   getFavorites,
   addFavorite,
   removeFavorite,
-  updateFavorite
+  updateFavorite,
+  // New connection management functions
+  createConnection,
+  editConnection,
+  listConnections,
+  getConnection,
+  deleteConnection,
+  getConnectionHistory,
+  addQueryToConnectionHistory,
+  getConnectionFavorites,
+  addConnectionFavorite,
+  removeConnectionFavorite,
+  getConnectionPromptExtension,
+  setConnectionPromptExtension,
+  getConnectionStringForConnection
 } from './lib/state'
 import { homedir } from 'os'
 import { generateQuery } from './lib/ai'
@@ -357,6 +371,183 @@ app.whenReady().then(() => {
 
   ipcMain.handle('setClaudeModel', async (_, claudeModel) => {
     await setClaudeModel(claudeModel)
+  })
+
+  // Connection management handlers
+  ipcMain.handle('createConnection', async (_, name, connectionMetadata) => {
+    try {
+      await testConnectionString(connectionMetadata.connectionString)
+      await createConnection(name, connectionMetadata)
+      return { success: true }
+    } catch (error: any) {
+      return { success: false, error: error.message }
+    }
+  })
+
+  ipcMain.handle('editConnection', async (_, name, connectionMetadata) => {
+    try {
+      await testConnectionString(connectionMetadata.connectionString)
+      await editConnection(name, connectionMetadata)
+      return { success: true }
+    } catch (error: any) {
+      return { success: false, error: error.message }
+    }
+  })
+
+  ipcMain.handle('listConnections', async () => {
+    try {
+      const connections = await listConnections()
+      return connections
+    } catch (error: any) {
+      console.error('Error listing connections:', error)
+      return []
+    }
+  })
+
+  ipcMain.handle('getConnection', async (_, name) => {
+    try {
+      const connection = await getConnection(name)
+      return { success: true, data: connection }
+    } catch (error: any) {
+      return { success: false, error: error.message }
+    }
+  })
+
+  ipcMain.handle('deleteConnection', async (_, name) => {
+    try {
+      await deleteConnection(name)
+      return { success: true }
+    } catch (error: any) {
+      return { success: false, error: error.message }
+    }
+  })
+
+  ipcMain.handle('getConnectionHistory', async (_, name) => {
+    try {
+      const history = await getConnectionHistory(name)
+      return history
+    } catch (error: any) {
+      console.error('Error loading connection history:', error)
+      return []
+    }
+  })
+
+  ipcMain.handle('addQueryToConnectionHistory', async (_, name, queryEntry) => {
+    try {
+      await addQueryToConnectionHistory(name, queryEntry)
+      return true
+    } catch (error: any) {
+      console.error('Error saving query to connection history:', error)
+      return false
+    }
+  })
+
+  ipcMain.handle('getConnectionFavorites', async (_, name) => {
+    try {
+      const favorites = await getConnectionFavorites(name)
+      return favorites
+    } catch (error: any) {
+      console.error('Error loading connection favorites:', error)
+      return []
+    }
+  })
+
+  ipcMain.handle('addConnectionFavorite', async (_, name, favorite) => {
+    try {
+      await addConnectionFavorite(name, favorite)
+      return true
+    } catch (error: any) {
+      console.error('Error adding connection favorite:', error)
+      return false
+    }
+  })
+
+  ipcMain.handle('removeConnectionFavorite', async (_, name, favoriteId) => {
+    try {
+      await removeConnectionFavorite(name, favoriteId)
+      return true
+    } catch (error: any) {
+      console.error('Error removing connection favorite:', error)
+      return false
+    }
+  })
+
+  ipcMain.handle('getConnectionPromptExtension', async (_, name) => {
+    try {
+      const promptExtension = await getConnectionPromptExtension(name)
+      return promptExtension ?? ''
+    } catch (error: any) {
+      console.error('Error loading connection prompt extension:', error)
+      return ''
+    }
+  })
+
+  ipcMain.handle('setConnectionPromptExtension', async (_, name, promptExtension) => {
+    try {
+      await setConnectionPromptExtension(name, promptExtension)
+      return true
+    } catch (error: any) {
+      console.error('Error setting connection prompt extension:', error)
+      return false
+    }
+  })
+
+  ipcMain.handle('runQueryForConnection', async (_, name, query) => {
+    try {
+      const connectionString = await getConnectionStringForConnection(name)
+      const rows = await runQuery(connectionString, query)
+      return {
+        error: null,
+        data: rows
+      }
+    } catch (error: any) {
+      return {
+        error: error.message,
+        data: null
+      }
+    }
+  })
+
+  ipcMain.handle('generateQueryForConnection', async (_, name, input, existingQuery) => {
+    try {
+      console.log('Generating query for connection:', name, 'with input:', input)
+      const connectionString = await getConnectionStringForConnection(name)
+      const aiProvider = await getAiProvider()
+      const promptExtension = await getConnectionPromptExtension(name)
+
+      let apiKey: string
+      let model: string | undefined
+      let openAiBaseUrl: string | undefined
+
+      if (aiProvider === 'openai') {
+        apiKey = (await getOpenAiKey()) ?? ''
+        model = await getOpenAiModel()
+        openAiBaseUrl = await getOpenAiBaseUrl()
+      } else {
+        apiKey = (await getClaudeApiKey()) ?? ''
+        model = await getClaudeModel()
+      }
+
+      const query = await generateQuery(
+        input,
+        connectionString,
+        aiProvider,
+        apiKey,
+        existingQuery,
+        promptExtension ?? '',
+        openAiBaseUrl,
+        model
+      )
+      return {
+        error: null,
+        data: query
+      }
+    } catch (error: any) {
+      return {
+        error: error.message,
+        data: null
+      }
+    }
   })
 
   createWindow()

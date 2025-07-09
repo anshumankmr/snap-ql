@@ -230,13 +230,15 @@ describe('State Module Integration Tests', () => {
         const fileContent = await fs.readFile(settingsPath(), 'utf8')
 
         // Should be properly formatted JSON with 2-space indentation
-        expect(fileContent).toContain('{\n  "connectionString": "test-connection"')
         expect(fileContent).toContain('  "aiProvider": "claude"')
         expect(fileContent).toContain('  "openAiKey": "test-key"')
 
         // Should be valid JSON
         const parsed = JSON.parse(fileContent)
         expect(parsed).toBeInstanceOf(Object)
+
+        // Connection string should be in legacy format for backward compatibility
+        expect(parsed.connectionString).toBe('test-connection')
       })
     })
   })
