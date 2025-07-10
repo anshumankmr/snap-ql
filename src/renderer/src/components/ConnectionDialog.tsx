@@ -188,8 +188,8 @@ export const ConnectionDialog = ({
           className="font-mono text-sm min-h-[80px]"
         />
         <p className="text-xs text-muted-foreground">
-          Add any additional information about your database that isn't captured in the schema. This
-          will help the AI generate more accurate queries.
+          Add any additional information about your database that isn&apos;t captured in the schema.
+          This will help the AI generate more accurate queries.
         </p>
       </div>
 

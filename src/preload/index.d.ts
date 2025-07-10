@@ -49,6 +49,8 @@ declare global {
       testConnectionString: (
         connectionString: string
       ) => Promise<{ success: boolean; error?: string }>
+      getDatabaseSchema: (connectionName: string) => Promise<{ error: string | null; data: any }>
+      getConnectionDatabaseType: (connectionName: string) => Promise<'postgres' | 'mysql' | null>
     }
   }
 }

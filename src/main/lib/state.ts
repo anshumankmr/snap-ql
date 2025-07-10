@@ -420,3 +420,11 @@ export async function setConnectionPromptExtension(
   settings.promptExtension = val
   await setConnectionSettings(name, settings)
 }
+
+export async function getConnectionDatabaseType(
+  name: string
+): Promise<'postgres' | 'mysql' | null> {
+  const { parseConnectionString } = await import('./db')
+  const connectionString = await getConnectionStringForConnection(name)
+  return parseConnectionString(connectionString)
+}

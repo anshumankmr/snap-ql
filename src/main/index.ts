@@ -2,7 +2,7 @@ import { app, shell, BrowserWindow, ipcMain, Menu, MenuItemConstructorOptions } 
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../logo.png?asset'
-import { runQuery, testConnectionString } from './lib/db'
+import { runQuery, testConnectionString, getDatabaseSchema } from './lib/db'
 import {
   getOpenAiKey,
   setOpenAiKey,
@@ -31,7 +31,8 @@ import {
   updateConnectionFavorite,
   getConnectionPromptExtension,
   setConnectionPromptExtension,
-  getConnectionStringForConnection
+  getConnectionStringForConnection,
+  getConnectionDatabaseType
 } from './lib/state'
 import { generateQuery } from './lib/ai'
 
@@ -367,6 +368,32 @@ app.whenReady().then(() => {
       return { success: true }
     } catch (error: any) {
       return { success: false, error: error.message }
+    }
+  })
+
+  ipcMain.handle('getDatabaseSchema', async (_, connectionName) => {
+    try {
+      const connectionString = await getConnectionStringForConnection(connectionName)
+      const schema = await getDatabaseSchema(connectionString)
+      return {
+        error: null,
+        data: schema
+      }
+    } catch (error: any) {
+      return {
+        error: error.message,
+        data: null
+      }
+    }
+  })
+
+  ipcMain.handle('getConnectionDatabaseType', async (_, connectionName) => {
+    try {
+      const dbType = await getConnectionDatabaseType(connectionName)
+      return dbType
+    } catch (error: any) {
+      console.error('Failed to get database type:', error)
+      return null
     }
   })
 

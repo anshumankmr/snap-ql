@@ -57,7 +57,11 @@ try {
     generateQueryForConnection: async (name: string, input: string, existingQuery: string) =>
       await ipcRenderer.invoke('generateQueryForConnection', name, input, existingQuery),
     testConnectionString: async (connectionString: string) =>
-      await ipcRenderer.invoke('testConnectionString', connectionString)
+      await ipcRenderer.invoke('testConnectionString', connectionString),
+    getDatabaseSchema: async (connectionName: string) =>
+      await ipcRenderer.invoke('getDatabaseSchema', connectionName),
+    getConnectionDatabaseType: async (connectionName: string) =>
+      await ipcRenderer.invoke('getConnectionDatabaseType', connectionName)
   })
 } catch (error) {
   console.error(error)
