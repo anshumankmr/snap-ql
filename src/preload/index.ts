@@ -7,12 +7,7 @@ if (!process.contextIsolated) {
 try {
   contextBridge.exposeInMainWorld('context', {
     locale: navigator.language,
-    getConnectionString: async () => await ipcRenderer.invoke('getConnectionString'),
-    setConnectionString: async (connectionString: string) =>
-      await ipcRenderer.invoke('setConnectionString', connectionString),
-    runQuery: async (query: string) => await ipcRenderer.invoke('runQuery', query),
-    generateQuery: async (input: string, sqlQuery: string) =>
-      await ipcRenderer.invoke('generateQuery', input, sqlQuery),
+    // AI Provider settings
     getOpenAiKey: async () => await ipcRenderer.invoke('getOpenAiKey'),
     setOpenAiKey: async (openAiKey: string) => await ipcRenderer.invoke('setOpenAiKey', openAiKey),
     getOpenAiBaseUrl: async () => await ipcRenderer.invoke('getOpenAiBaseUrl'),
@@ -21,20 +16,6 @@ try {
     getOpenAiModel: async () => await ipcRenderer.invoke('getOpenAiModel'),
     setOpenAiModel: async (openAiModel: string) =>
       await ipcRenderer.invoke('setOpenAiModel', openAiModel),
-    getQueryHistory: async () => await ipcRenderer.invoke('getQueryHistory'),
-    addQueryToHistory: async (queryEntry: any) =>
-      await ipcRenderer.invoke('addQueryToHistory', queryEntry),
-    updateQueryHistory: async (queryId: string, updates: any) =>
-      await ipcRenderer.invoke('updateQueryHistory', queryId, updates),
-    getFavorites: async () => await ipcRenderer.invoke('getFavorites'),
-    addFavorite: async (favorite: any) => await ipcRenderer.invoke('addFavorite', favorite),
-    removeFavorite: async (favoriteId: string) =>
-      await ipcRenderer.invoke('removeFavorite', favoriteId),
-    updateFavorite: async (favoriteId: string, updates: any) =>
-      await ipcRenderer.invoke('updateFavorite', favoriteId, updates),
-    getPromptExtension: async () => await ipcRenderer.invoke('getPromptExtension'),
-    setPromptExtension: async (promptExtension: string) =>
-      await ipcRenderer.invoke('setPromptExtension', promptExtension),
     getAiProvider: async () => await ipcRenderer.invoke('getAiProvider'),
     setAiProvider: async (aiProvider: 'openai' | 'claude') =>
       await ipcRenderer.invoke('setAiProvider', aiProvider),
