@@ -11,6 +11,7 @@ import { ThemeProvider } from './components/ui/theme-provider'
 import { Graph } from './components/Graph'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './components/ui/tabs'
 import { BarChart3, Table } from 'lucide-react'
+import { AnimatePresence, motion } from 'framer-motion'
 
 interface QueryHistory {
   id: string
@@ -403,41 +404,113 @@ const Index = () => {
                           onValueChange={(value) => setActiveTab(value as 'visualize' | 'results')}
                           className="w-full"
                         >
-                          <TabsList className="grid w-full grid-cols-2">
-                            {graphMetadata && (
-                              <TabsTrigger value="visualize" className="flex items-center gap-2">
-                                <BarChart3 className="w-4 h-4" />
-                                Visualize
+                          <motion.div
+                            key={`tabs-${currentItemId}-${selectedConnection}`}
+                            initial={{ opacity: 0, y: 5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{
+                              duration: 0.05,
+                              ease: [0.4, 0, 0.2, 1]
+                            }}
+                          >
+                            <TabsList className="grid w-full grid-cols-2">
+                              {graphMetadata && (
+                                <TabsTrigger value="visualize" className="flex items-center gap-2">
+                                  <BarChart3 className="w-4 h-4" />
+                                  Visualize
+                                </TabsTrigger>
+                              )}
+                              <TabsTrigger
+                                value="results"
+                                className={graphMetadata ? '' : 'col-span-2'}
+                              >
+                                <Table className="w-4 h-4 mr-2" />
+                                Results
                               </TabsTrigger>
-                            )}
-                            <TabsTrigger
-                              value="results"
-                              className={graphMetadata ? '' : 'col-span-2'}
+                            </TabsList>
+                          </motion.div>
+
+                          <AnimatePresence mode="wait">
+                            <TabsContent
+                              value="visualize"
+                              key={`visualize-${currentItemId}-${selectedConnection}`}
                             >
-                              <Table className="w-4 h-4 mr-2" />
-                              Results
-                            </TabsTrigger>
-                          </TabsList>
+                              {graphMetadata ? (
+                                <motion.div
+                                  initial={{ opacity: 0, y: 15, scale: 0.975 }}
+                                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                                  exit={{ opacity: 0, y: -15, scale: 0.975 }}
+                                  transition={{
+                                    duration: 0.067,
+                                    ease: [0.4, 0, 0.2, 1]
+                                  }}
+                                >
+                                  <Graph
+                                    data={graphableData}
+                                    graphMetadata={graphMetadata}
+                                    onMetadataChange={handleGraphMetadataChange}
+                                  />
+                                </motion.div>
+                              ) : (
+                                <motion.div
+                                  initial={{ opacity: 0, y: 15, scale: 0.975 }}
+                                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                                  exit={{ opacity: 0, y: -15, scale: 0.975 }}
+                                  transition={{
+                                    duration: 0.067,
+                                    ease: [0.4, 0, 0.2, 1]
+                                  }}
+                                >
+                                  <ResultsTable
+                                    results={queryResults}
+                                    isLoading={isLoading}
+                                    query={sqlQuery}
+                                    graphMetadata={graphMetadata}
+                                    onCreateGraph={handleGraphMetadataChange}
+                                  />
+                                </motion.div>
+                              )}
+                            </TabsContent>
 
-                          <TabsContent value="visualize">
-                            {graphMetadata ? (
-                              <Graph
-                                data={graphableData}
-                                graphMetadata={graphMetadata}
-                                onMetadataChange={handleGraphMetadataChange}
-                              />
-                            ) : (
-                              <ResultsTable
-                                results={queryResults}
-                                isLoading={isLoading}
-                                query={sqlQuery}
-                                graphMetadata={graphMetadata}
-                                onCreateGraph={handleGraphMetadataChange}
-                              />
-                            )}
-                          </TabsContent>
+                            <TabsContent
+                              value="results"
+                              key={`results-${currentItemId}-${selectedConnection}`}
+                            >
+                              <motion.div
+                                initial={{ opacity: 0, y: 30, scale: 0.95 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: -30, scale: 0.95 }}
+                                transition={{
+                                  duration: 0.067,
+                                  ease: [0.4, 0, 0.2, 1]
+                                }}
+                              >
+                                <ResultsTable
+                                  results={queryResults}
+                                  isLoading={isLoading}
+                                  query={sqlQuery}
+                                  graphMetadata={graphMetadata}
+                                  onCreateGraph={handleGraphMetadataChange}
+                                />
+                              </motion.div>
+                            </TabsContent>
+                          </AnimatePresence>
+                        </Tabs>
+                      )}
 
-                          <TabsContent value="results">
+                      {/* Show Results Table without tabs when no results */}
+                      {queryResults.length === 0 && (
+                        <AnimatePresence mode="wait">
+                          <motion.div
+                            key={`empty-${currentItemId || 'new'}-${selectedConnection}`}
+                            initial={{ opacity: 0, y: 15, scale: 0.975 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -15, scale: 0.975 }}
+                            transition={{
+                              duration: 0.067,
+                              ease: [0.4, 0, 0.2, 1]
+                            }}
+                          >
                             <ResultsTable
                               results={queryResults}
                               isLoading={isLoading}
@@ -445,19 +518,8 @@ const Index = () => {
                               graphMetadata={graphMetadata}
                               onCreateGraph={handleGraphMetadataChange}
                             />
-                          </TabsContent>
-                        </Tabs>
-                      )}
-
-                      {/* Show Results Table without tabs when no results */}
-                      {queryResults.length === 0 && (
-                        <ResultsTable
-                          results={queryResults}
-                          isLoading={isLoading}
-                          query={sqlQuery}
-                          graphMetadata={graphMetadata}
-                          onCreateGraph={handleGraphMetadataChange}
-                        />
+                          </motion.div>
+                        </AnimatePresence>
                       )}
                     </div>
                   ) : (

@@ -11,12 +11,12 @@ import {
 } from '../components/ui/table'
 import { Skeleton } from '../components/ui/skeleton'
 import { Badge } from '../components/ui/badge'
-import { ScrollArea } from '../components/ui/scroll-area'
 import { Button } from './ui/button'
 import { Clipboard, Code, BarChart3 } from 'lucide-react'
 import { useToast } from '@renderer/hooks/use-toast'
 import { GraphEditDialog } from './GraphEditDialog'
 import { GraphMetadata } from './Graph'
+import { motion } from 'framer-motion'
 
 interface ResultsTableProps {
   results: any[]
@@ -152,7 +152,19 @@ export const ResultsTable = ({
               </TableHeader>
               <TableBody>
                 {results.map((row, index) => (
-                  <TableRow key={index} className="hover:bg-muted/30">
+                  <motion.tr
+                    key={index}
+                    initial={{ opacity: 0, x: -5 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{
+                      delay: Math.min(index * 0.0035, 0.05),
+                      duration: 0.033,
+                      type: 'spring',
+                      stiffness: 800,
+                      damping: 50
+                    }}
+                    className="hover:bg-muted/30 border-b"
+                  >
                     {columns.map((column) => (
                       <TableCell
                         key={column}
@@ -167,7 +179,7 @@ export const ResultsTable = ({
                         </div>
                       </TableCell>
                     ))}
-                  </TableRow>
+                  </motion.tr>
                 ))}
               </TableBody>
             </Table>
