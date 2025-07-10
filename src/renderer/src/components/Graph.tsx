@@ -130,11 +130,6 @@ export const Graph = ({ data, graphMetadata, onMetadataChange, onRemove }: Graph
               onSave={onMetadataChange}
             />
           )}
-          {onRemove && (
-            <Button variant="ghost" size="sm" onClick={onRemove}>
-              <X className="h-4 w-4" />
-            </Button>
-          )}
         </div>
       </CardHeader>
       <CardContent>

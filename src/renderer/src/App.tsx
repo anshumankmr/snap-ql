@@ -9,6 +9,8 @@ import { useToast } from './hooks/use-toast'
 import { Button } from './components/ui/button'
 import { ThemeProvider } from './components/ui/theme-provider'
 import { Graph } from './components/Graph'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from './components/ui/tabs'
+import { BarChart3, Table } from 'lucide-react'
 
 interface QueryHistory {
   id: string
@@ -35,7 +37,7 @@ const Index = () => {
   const [error, setError] = useState<string | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [selectedConnection, setSelectedConnection] = useState<string | null>(null)
-  const [connections, setConnections] = useState<string[]>([])
+  const [activeTab, setActiveTab] = useState<'visualize' | 'results'>('results')
 
   const { toast } = useToast()
 
@@ -46,7 +48,6 @@ const Index = () => {
     const loadConnections = async () => {
       try {
         const connectionList = await window.context.listConnections()
-        setConnections(connectionList)
         
         // Set first connection as default if no connection is selected
         if (connectionList.length > 0 && !selectedConnection) {
@@ -226,10 +227,15 @@ const Index = () => {
     setQueryResults(item.results)
     setGraphMetadata(item.graph ?? null)
     setCurrentItemId(item.id)
+    // Set active tab based on whether the item has a graph
+    setActiveTab(item.graph ? 'visualize' : 'results')
   }
 
   const handleGraphMetadataChange = async (newMetadata: GraphMetadata) => {
     setGraphMetadata(newMetadata)
+    
+    // Switch to visualize tab when graph is created
+    setActiveTab('visualize')
 
     // Update the current item if one is selected
     if (currentItemId) {
@@ -255,6 +261,7 @@ const Index = () => {
   }
 
   const handleRemoveGraph = async () => {
+    setActiveTab('results')
     setGraphMetadata(null)
 
     // Update the current history item if one is selected
@@ -379,59 +386,114 @@ const Index = () => {
         </div>
 
         <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-          {/* AI Chat Header */}
-          <div className="border-b bg-card p-3 flex-shrink-0">
-            <AIChat onUserQuery={handleAIQuery} isGenerating={isGenerating} />
-          </div>
+          {currentView === 'editor' ? (
+            <>
+              {/* AI Chat Header - Only in editor view */}
+              <div className="border-b bg-card p-3 flex-shrink-0">
+                <AIChat onUserQuery={handleAIQuery} isGenerating={isGenerating} />
+              </div>
 
-          {/* Main Content - Scrollable */}
-          <div className="flex-1 overflow-y-auto">
-            <div className="p-3">
-              {currentView === 'editor' ? (
-                selectedConnection ? (
-                  <div className="space-y-3">
-                    <div>
-                      <SQLEditor
-                        value={sqlQuery}
-                        onChange={setSqlQuery}
-                        onRun={() => runQuery(sqlQuery)}
-                        isLoading={isLoading}
-                      />
+              {/* Main Content - Scrollable */}
+              <div className="flex-1 overflow-y-auto scrollbar-hide">
+                <div className="p-3">
+                  {selectedConnection ? (
+                    <div className="space-y-3">
+                      <div>
+                        <SQLEditor
+                          value={sqlQuery}
+                          onChange={setSqlQuery}
+                          onRun={() => runQuery(sqlQuery)}
+                          isLoading={isLoading}
+                        />
+                      </div>
+                      {error && <div className="text-red-500">{error}</div>}
+                      
+                      {/* Tabs for Graph and Results */}
+                      {queryResults.length > 0 && (
+                        <Tabs 
+                          value={graphMetadata ? activeTab : 'results'}
+                          onValueChange={(value) => setActiveTab(value as 'visualize' | 'results')}
+                          className="w-full"
+                        >
+                          <TabsList className="grid w-full grid-cols-2">
+                            {graphMetadata && (
+                              <TabsTrigger value="visualize" className="flex items-center gap-2">
+                                <BarChart3 className="w-4 h-4" />
+                                Visualize
+                              </TabsTrigger>
+                            )}
+                            <TabsTrigger 
+                              value="results" 
+                              className={graphMetadata ? "" : "col-span-2"}
+                            >
+                              <Table className="w-4 h-4 mr-2" />
+                              Results
+                            </TabsTrigger>
+                          </TabsList>
+                          
+                          <TabsContent value="visualize">
+                            {graphMetadata ? (
+                              <Graph
+                                data={graphableData}
+                                graphMetadata={graphMetadata}
+                                onMetadataChange={handleGraphMetadataChange}
+                                onRemove={handleRemoveGraph}
+                              />
+                            ) : (
+                              <ResultsTable
+                                results={queryResults}
+                                isLoading={isLoading}
+                                query={sqlQuery}
+                                graphMetadata={graphMetadata}
+                                onCreateGraph={handleGraphMetadataChange}
+                              />
+                            )}
+                          </TabsContent>
+                          
+                          <TabsContent value="results">
+                            <ResultsTable
+                              results={queryResults}
+                              isLoading={isLoading}
+                              query={sqlQuery}
+                              graphMetadata={graphMetadata}
+                              onCreateGraph={handleGraphMetadataChange}
+                            />
+                          </TabsContent>
+                        </Tabs>
+                      )}
+                      
+                      {/* Show Results Table without tabs when no results */}
+                      {queryResults.length === 0 && (
+                        <ResultsTable
+                          results={queryResults}
+                          isLoading={isLoading}
+                          query={sqlQuery}
+                          graphMetadata={graphMetadata}
+                          onCreateGraph={handleGraphMetadataChange}
+                        />
+                      )}
                     </div>
-                    {error && <div className="text-red-500">{error}</div>}
-                    {graphMetadata && queryResults.length > 0 && (
-                      <Graph
-                        data={graphableData}
-                        graphMetadata={graphMetadata}
-                        onMetadataChange={handleGraphMetadataChange}
-                        onRemove={handleRemoveGraph}
-                      />
-                    )}
-                    <div>
-                      <ResultsTable
-                        results={queryResults}
-                        isLoading={isLoading}
-                        query={sqlQuery}
-                        graphMetadata={graphMetadata}
-                        onCreateGraph={handleGraphMetadataChange}
-                      />
+                  ) : (
+                    <div className="flex items-center justify-center h-full">
+                      <div className="text-center">
+                        <h2 className="text-xl font-semibold mb-2">No Connection Selected</h2>
+                        <p className="text-muted-foreground">
+                          Please select a connection from the sidebar to start querying your database.
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="text-center">
-                      <h2 className="text-xl font-semibold mb-2">No Connection Selected</h2>
-                      <p className="text-muted-foreground">
-                        Please select a connection from the sidebar to start querying your database.
-                      </p>
-                    </div>
-                  </div>
-                )
-              ) : (
+                  )}
+                </div>
+              </div>
+            </>
+          ) : (
+            /* Settings view - no AI Chat */
+            <div className="flex-1 overflow-y-auto scrollbar-hide">
+              <div className="p-3">
                 <Settings />
-              )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         <Toaster />

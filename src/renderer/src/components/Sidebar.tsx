@@ -1,6 +1,5 @@
 import { Database, Settings as SettingsIcon, History, Clock, Zap, Star, Plus, Pencil } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { ConnectionDialog } from './ConnectionDialog'
 import { useState, useEffect } from 'react'
 
@@ -169,7 +168,7 @@ export const Sidebar = ({
             </div>
 
             <div className="p-2 border-b border-border flex-shrink-0">
-              <ScrollArea className="max-h-32">
+              <div className="max-h-32 overflow-y-auto scrollbar-hide">
                 <div className="space-y-1">
                   {favorites.map((item) => (
                   <button
@@ -203,7 +202,7 @@ export const Sidebar = ({
                   </button>
                   ))}
                 </div>
-              </ScrollArea>
+              </div>
             </div>
           </>
         )}
@@ -216,7 +215,7 @@ export const Sidebar = ({
           </div>
         </div>
 
-        <ScrollArea className="flex-1">
+        <div className="flex-1 overflow-y-auto scrollbar-hide">
           <div className="p-2">
             {queryHistory.length === 0 ? (
               <div className="text-center py-4">
@@ -263,7 +262,7 @@ export const Sidebar = ({
               </div>
             )}
           </div>
-        </ScrollArea>
+        </div>
       </div>
 
       {/* Settings button - sticky at bottom */}
