@@ -123,7 +123,6 @@ export const Settings = () => {
     loadSavedClaudeModel()
   }, [toast])
 
-
   const updateAiProvider = async (provider: 'openai' | 'claude') => {
     try {
       await window.context.setAiProvider(provider)
@@ -193,7 +192,6 @@ export const Settings = () => {
       setIsSavingModel(false)
     }
   }
-
 
   return (
     <div className="max-w-2xl space-y-4">

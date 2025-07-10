@@ -11,7 +11,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from './ui/dialog'
 
 interface ConnectionDialogProps {
@@ -55,7 +55,7 @@ export const ConnectionDialog = ({
 
   const loadConnectionData = async () => {
     if (!connectionName) return
-    
+
     try {
       const connection = await window.context.getConnection(connectionName)
       setConnectionString(connection.connectionString)
@@ -188,17 +188,13 @@ export const ConnectionDialog = ({
           className="font-mono text-sm min-h-[80px]"
         />
         <p className="text-xs text-muted-foreground">
-          Add any additional information about your database that isn't captured in the schema.
-          This will help the AI generate more accurate queries.
+          Add any additional information about your database that isn't captured in the schema. This
+          will help the AI generate more accurate queries.
         </p>
       </div>
 
-      {errorMessage && (
-        <p className="text-sm text-destructive">{errorMessage}</p>
-      )}
-      {successMessage && (
-        <p className="text-sm text-green-600">{successMessage}</p>
-      )}
+      {errorMessage && <p className="text-sm text-destructive">{errorMessage}</p>}
+      {successMessage && <p className="text-sm text-green-600">{successMessage}</p>}
 
       <div className="flex gap-2 pt-2">
         <Button
@@ -224,19 +220,14 @@ export const ConnectionDialog = ({
   if (trigger) {
     return (
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
-        <DialogTrigger asChild>
-          {trigger}
-        </DialogTrigger>
+        <DialogTrigger asChild>{trigger}</DialogTrigger>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>
-              {isEditing ? 'Edit Connection' : 'Add New Connection'}
-            </DialogTitle>
+            <DialogTitle>{isEditing ? 'Edit Connection' : 'Add New Connection'}</DialogTitle>
             <DialogDescription>
-              {isEditing 
+              {isEditing
                 ? 'Update your database connection settings.'
-                : 'Create a new database connection.'
-              }
+                : 'Create a new database connection.'}
             </DialogDescription>
           </DialogHeader>
           {content}
@@ -249,14 +240,11 @@ export const ConnectionDialog = ({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>
-            {isEditing ? 'Edit Connection' : 'Add New Connection'}
-          </DialogTitle>
+          <DialogTitle>{isEditing ? 'Edit Connection' : 'Add New Connection'}</DialogTitle>
           <DialogDescription>
-            {isEditing 
+            {isEditing
               ? 'Update your database connection settings.'
-              : 'Create a new database connection.'
-            }
+              : 'Create a new database connection.'}
           </DialogDescription>
         </DialogHeader>
         {content}

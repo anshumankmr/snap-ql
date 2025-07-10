@@ -76,7 +76,6 @@ async function settingsPath() {
   return `${root}/settings.json`
 }
 
-
 async function connectionSettingsPath(connectionName: string) {
   const connDir = connectionDir(connectionName)
   await fs.ensureDir(connDir)
@@ -94,7 +93,6 @@ async function connectionFavoritesPath(connectionName: string) {
   await fs.ensureDir(connDir)
   return `${connDir}/favorites.json`
 }
-
 
 async function getGlobalSettings(): Promise<z.infer<typeof globalSettingsSchema>> {
   const path = await settingsPath()
@@ -153,9 +151,6 @@ async function setConnectionSettings(
   await fs.writeJson(path, settings, { spaces: 2 })
 }
 
-
-
-
 export async function getConnectionStringForConnection(name: string): Promise<string> {
   const settings = await getConnectionSettings(name)
   return settings.connectionString
@@ -176,7 +171,6 @@ export async function getOpenAiModel() {
   return settings.openAiModel
 }
 
-
 export async function setOpenAiKey(openAiKey: string) {
   const settings = await getGlobalSettings()
   settings.openAiKey = openAiKey
@@ -194,9 +188,6 @@ export async function setOpenAiModel(openAiModel: string) {
   settings.openAiModel = openAiModel
   await setGlobalSettings(settings)
 }
-
-
-
 
 export async function getAiProvider() {
   const settings = await getGlobalSettings()

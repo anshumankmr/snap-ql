@@ -48,7 +48,7 @@ const Index = () => {
     const loadConnections = async () => {
       try {
         const connectionList = await window.context.listConnections()
-        
+
         // Set first connection as default if no connection is selected
         if (connectionList.length > 0 && !selectedConnection) {
           setSelectedConnection(connectionList[0])
@@ -141,7 +141,11 @@ const Index = () => {
               ...updatedFavorite,
               timestamp: updatedFavorite.timestamp.toISOString()
             }
-            await window.context.updateConnectionFavorite(selectedConnection, currentFavorite.id, favoriteEntryForStorage)
+            await window.context.updateConnectionFavorite(
+              selectedConnection,
+              currentFavorite.id,
+              favoriteEntryForStorage
+            )
           } catch (error) {
             console.error('Failed to update favorite:', error)
           }
@@ -170,7 +174,10 @@ const Index = () => {
             ...historyEntry,
             timestamp: historyEntry.timestamp.toISOString() // Convert Date to string for storage
           }
-          await window.context.addQueryToConnectionHistory(selectedConnection, historyEntryForStorage)
+          await window.context.addQueryToConnectionHistory(
+            selectedConnection,
+            historyEntryForStorage
+          )
         } catch (error) {
           console.error('Failed to save query to history:', error)
         }
@@ -197,7 +204,11 @@ const Index = () => {
       duration: 1500
     })
     try {
-      const res = await window.context.generateQueryForConnection(selectedConnection, userQuery, sqlQuery ?? '')
+      const res = await window.context.generateQueryForConnection(
+        selectedConnection,
+        userQuery,
+        sqlQuery ?? ''
+      )
       if (res.error) {
         setError(res.error)
       } else {
@@ -233,7 +244,7 @@ const Index = () => {
 
   const handleGraphMetadataChange = async (newMetadata: GraphMetadata) => {
     setGraphMetadata(newMetadata)
-    
+
     // Switch to visualize tab when graph is created
     setActiveTab('visualize')
 
@@ -252,7 +263,9 @@ const Index = () => {
 
         // Persist to storage
         try {
-          await window.context.updateConnectionHistory(selectedConnection!, currentItemId, { graph: newMetadata })
+          await window.context.updateConnectionHistory(selectedConnection!, currentItemId, {
+            graph: newMetadata
+          })
         } catch (error) {
           console.error('Failed to update query history:', error)
         }
@@ -314,7 +327,9 @@ const Index = () => {
 
     // Persist to storage
     try {
-      await window.context.updateConnectionFavorite(selectedConnection, favoriteId, { graph: newMetadata })
+      await window.context.updateConnectionFavorite(selectedConnection, favoriteId, {
+        graph: newMetadata
+      })
     } catch (error) {
       console.error('Failed to update favorite:', error)
     }
@@ -323,7 +338,7 @@ const Index = () => {
   const handleConnectionSelect = (connectionName: string | null) => {
     setSelectedConnection(connectionName)
     setCurrentView('editor') // Switch to editor view when selecting a connection
-    
+
     // Clear the editor state when switching connections
     setSqlQuery('SELECT * FROM information_schema.tables;')
     setQueryResults([])
@@ -380,10 +395,10 @@ const Index = () => {
                         />
                       </div>
                       {error && <div className="text-red-500">{error}</div>}
-                      
+
                       {/* Tabs for Graph and Results */}
                       {queryResults.length > 0 && (
-                        <Tabs 
+                        <Tabs
                           value={graphMetadata ? activeTab : 'results'}
                           onValueChange={(value) => setActiveTab(value as 'visualize' | 'results')}
                           className="w-full"
@@ -395,15 +410,15 @@ const Index = () => {
                                 Visualize
                               </TabsTrigger>
                             )}
-                            <TabsTrigger 
-                              value="results" 
-                              className={graphMetadata ? "" : "col-span-2"}
+                            <TabsTrigger
+                              value="results"
+                              className={graphMetadata ? '' : 'col-span-2'}
                             >
                               <Table className="w-4 h-4 mr-2" />
                               Results
                             </TabsTrigger>
                           </TabsList>
-                          
+
                           <TabsContent value="visualize">
                             {graphMetadata ? (
                               <Graph
@@ -421,7 +436,7 @@ const Index = () => {
                               />
                             )}
                           </TabsContent>
-                          
+
                           <TabsContent value="results">
                             <ResultsTable
                               results={queryResults}
@@ -433,7 +448,7 @@ const Index = () => {
                           </TabsContent>
                         </Tabs>
                       )}
-                      
+
                       {/* Show Results Table without tabs when no results */}
                       {queryResults.length === 0 && (
                         <ResultsTable
@@ -450,7 +465,8 @@ const Index = () => {
                       <div className="text-center">
                         <h2 className="text-xl font-semibold mb-2">No Connection Selected</h2>
                         <p className="text-muted-foreground">
-                          Please select a connection from the sidebar to start querying your database.
+                          Please select a connection from the sidebar to start querying your
+                          database.
                         </p>
                       </div>
                     </div>

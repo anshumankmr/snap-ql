@@ -179,8 +179,9 @@ describe('State Module Integration Tests', () => {
       it('should fail if connection already exists', async () => {
         await createConnection('test-connection', testConnection)
 
-        await expect(createConnection('test-connection', testConnection))
-          .rejects.toThrow('Connection \'test-connection\' already exists')
+        await expect(createConnection('test-connection', testConnection)).rejects.toThrow(
+          "Connection 'test-connection' already exists"
+        )
       })
     })
 
@@ -201,8 +202,9 @@ describe('State Module Integration Tests', () => {
       })
 
       it('should fail if connection does not exist', async () => {
-        await expect(editConnection('non-existent', testConnection))
-          .rejects.toThrow('Connection \'non-existent\' not found')
+        await expect(editConnection('non-existent', testConnection)).rejects.toThrow(
+          "Connection 'non-existent' not found"
+        )
       })
     })
 
@@ -313,13 +315,15 @@ describe('State Module Integration Tests', () => {
         const connections = await listConnections()
         expect(connections).not.toContain('test-connection')
 
-        await expect(getConnection('test-connection'))
-          .rejects.toThrow('Connection \'test-connection\' not found')
+        await expect(getConnection('test-connection')).rejects.toThrow(
+          "Connection 'test-connection' not found"
+        )
       })
 
       it('should fail if connection does not exist', async () => {
-        await expect(deleteConnection('non-existent'))
-          .rejects.toThrow('Connection \'non-existent\' not found')
+        await expect(deleteConnection('non-existent')).rejects.toThrow(
+          "Connection 'non-existent' not found"
+        )
       })
     })
   })

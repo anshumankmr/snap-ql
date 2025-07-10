@@ -118,7 +118,6 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-
   ipcMain.handle('getOpenAiKey', async () => {
     return (await getOpenAiKey()) ?? ''
   })
@@ -142,10 +141,6 @@ app.whenReady().then(() => {
   ipcMain.handle('setOpenAiModel', async (_, openAiModel) => {
     await setOpenAiModel(openAiModel)
   })
-
-
-
-
 
   ipcMain.handle('getAiProvider', async () => {
     return await getAiProvider()

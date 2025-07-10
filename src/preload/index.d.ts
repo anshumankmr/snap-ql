@@ -37,13 +37,18 @@ declare global {
       updateConnectionFavorite: (name: string, favoriteId: string, updates: any) => Promise<boolean>
       getConnectionPromptExtension: (name: string) => Promise<string>
       setConnectionPromptExtension: (name: string, promptExtension: string) => Promise<boolean>
-      runQueryForConnection: (name: string, query: string) => Promise<{ error: string | null; data: any }>
+      runQueryForConnection: (
+        name: string,
+        query: string
+      ) => Promise<{ error: string | null; data: any }>
       generateQueryForConnection: (
         name: string,
         input: string,
         existingQuery: string
       ) => Promise<{ error: string | null; data: QueryResponse }>
-      testConnectionString: (connectionString: string) => Promise<{ success: boolean; error?: string }>
+      testConnectionString: (
+        connectionString: string
+      ) => Promise<{ success: boolean; error?: string }>
     }
   }
 }

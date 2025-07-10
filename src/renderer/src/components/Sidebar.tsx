@@ -1,7 +1,17 @@
-import { Database, Settings as SettingsIcon, History, Clock, Zap, Star, Plus, Pencil } from 'lucide-react'
+import {
+  Database,
+  Settings as SettingsIcon,
+  History,
+  Clock,
+  Zap,
+  Star,
+  Plus,
+  Pencil
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ConnectionDialog } from './ConnectionDialog'
 import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 
 interface QueryHistory {
   id: string
@@ -38,10 +48,15 @@ export const Sidebar = ({
   const [connections, setConnections] = useState<string[]>([])
   const [showAddDialog, setShowAddDialog] = useState(false)
   const [editingConnection, setEditingConnection] = useState<string | null>(null)
+  const [contentKey, setContentKey] = useState(0)
 
   useEffect(() => {
     loadConnections()
   }, [])
+
+  useEffect(() => {
+    setContentKey((prev) => prev + 1)
+  }, [selectedConnection])
 
   const loadConnections = async () => {
     try {
@@ -112,30 +127,47 @@ export const Sidebar = ({
         <ul className="p-2 space-y-0.5 border-b border-border">
           {connections.map((connectionName) => (
             <li key={connectionName}>
-              <button
+              <motion.button
                 onClick={() => handleConnectionClick(connectionName)}
                 className={cn(
-                  'w-full flex items-center space-x-2 px-2 py-1.5 rounded-md text-xs font-medium transition-colors group relative',
-                  selectedConnection === connectionName
-                    ? 'bg-muted text-foreground'
-                    : 'text-foreground hover:bg-muted'
+                  'w-full flex items-center space-x-2 px-2 py-1.5 rounded-md text-xs font-medium group relative',
+                  selectedConnection === connectionName ? 'text-foreground' : 'text-foreground'
                 )}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.05 }}
               >
-                <div className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />
-                <span className="truncate">{connectionName}</span>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setEditingConnection(connectionName)
-                  }}
-                  className="absolute right-2 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground transition-all"
-                >
-                  <Pencil className="w-3 h-3" />
-                </button>
-              </button>
+                {selectedConnection === connectionName && (
+                  <motion.div
+                    className="absolute inset-0 bg-muted rounded-md"
+                    layoutId="connection-highlight"
+                    transition={{ type: 'spring', stiffness: 900, damping: 40 }}
+                  />
+                )}
+                <div className="relative z-10 flex items-center space-x-2 w-full">
+                  <motion.div
+                    className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0"
+                    animate={{
+                      scale: selectedConnection === connectionName ? 1.2 : 1,
+                      opacity: selectedConnection === connectionName ? 1 : 0.7
+                    }}
+                    transition={{ duration: 0.07 }}
+                  />
+                  <span className="truncate">{connectionName}</span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setEditingConnection(connectionName)
+                    }}
+                    className="absolute right-2 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground transition-all"
+                  >
+                    <Pencil className="w-3 h-3" />
+                  </button>
+                </div>
+              </motion.button>
             </li>
           ))}
-          
+
           {connections.length === 0 && (
             <>
               <li className="text-center py-2">
@@ -158,54 +190,70 @@ export const Sidebar = ({
 
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         {/* Favorites Section */}
-        {favorites.length > 0 && (
-          <>
-            <div className="p-2 border-b border-border flex-shrink-0">
-              <div className="flex items-center space-x-2">
-                <Star className="w-3.5 h-3.5 text-yellow-500" />
-                <span className="text-xs font-medium text-muted-foreground">Favorites</span>
-              </div>
-            </div>
-
-            <div className="p-2 border-b border-border flex-shrink-0">
-              <div className="max-h-32 overflow-y-auto scrollbar-hide">
-                <div className="space-y-1">
-                  {favorites.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => onItemSelect(item)}
-                    className="w-full text-left p-2 rounded-md hover:bg-muted/50 transition-colors group relative"
-                  >
-                    <div className="space-y-1">
-                      <p className="text-xs font-mono text-foreground line-clamp-2 leading-3">
-                        {truncateQuery(item.query)}
-                      </p>
-                      <div className="flex items-center space-x-1">
-                        <Clock className="w-2.5 h-2.5 text-muted-foreground" />
-                        <span className="text-[10px] text-muted-foreground">
-                          {formatTimestamp(item.timestamp)}
-                        </span>
-                        <span className="text-[10px] text-muted-foreground">
-                          • {item.results.length} rows
-                        </span>
-                      </div>
-                    </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onRemoveFromFavorites(item.id)
-                      }}
-                      className="absolute top-1 right-1 opacity-100 text-yellow-500 hover:text-yellow-600 transition-colors"
-                    >
-                      <Star className="w-3 h-3 fill-current" />
-                    </button>
-                  </button>
-                  ))}
+        <AnimatePresence mode="wait">
+          {favorites.length > 0 && (
+            <motion.div
+              key={`favorites-${contentKey}`}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.07, ease: 'easeOut' }}
+            >
+              <div className="p-2 border-b border-border flex-shrink-0">
+                <div className="flex items-center space-x-2">
+                  <Star className="w-3.5 h-3.5 text-yellow-500" />
+                  <span className="text-xs font-medium text-muted-foreground">Favorites</span>
                 </div>
               </div>
-            </div>
-          </>
-        )}
+
+              <div className="p-2 border-b border-border flex-shrink-0">
+                <div className="max-h-32 overflow-y-auto scrollbar-hide">
+                  <motion.div
+                    className="space-y-1"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.1, delay: 0.03 }}
+                  >
+                    {favorites.map((item, index) => (
+                      <motion.button
+                        key={item.id}
+                        onClick={() => onItemSelect(item)}
+                        className="w-full text-left p-2 rounded-md hover:bg-muted/50 transition-colors group relative"
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.07, delay: 0.05 + index * 0.02 }}
+                      >
+                        <div className="space-y-1">
+                          <p className="text-xs font-mono text-foreground line-clamp-2 leading-3">
+                            {truncateQuery(item.query)}
+                          </p>
+                          <div className="flex items-center space-x-1">
+                            <Clock className="w-2.5 h-2.5 text-muted-foreground" />
+                            <span className="text-[10px] text-muted-foreground">
+                              {formatTimestamp(item.timestamp)}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground">
+                              • {item.results.length} rows
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onRemoveFromFavorites(item.id)
+                          }}
+                          className="absolute top-1 right-1 opacity-100 text-yellow-500 hover:text-yellow-600 transition-colors"
+                        >
+                          <Star className="w-3 h-3 fill-current" />
+                        </button>
+                      </motion.button>
+                    ))}
+                  </motion.div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* History Section */}
         <div className="p-2 border-b border-border flex-shrink-0">
@@ -216,52 +264,74 @@ export const Sidebar = ({
         </div>
 
         <div className="flex-1 overflow-y-auto scrollbar-hide">
-          <div className="p-2">
-            {queryHistory.length === 0 ? (
-              <div className="text-center py-4">
-                <p className="text-xs text-muted-foreground">No queries yet</p>
-              </div>
-            ) : (
-              <div className="space-y-1">
-                {queryHistory.map((item) => {
-                  const isFavorite = favorites.some((fav) => fav.id === item.id)
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => onItemSelect(item)}
-                      className="w-full text-left p-2 rounded-md hover:bg-muted/50 transition-colors group relative"
-                    >
-                      <div className="space-y-1">
-                        <p className="text-xs font-mono text-foreground line-clamp-2 leading-3">
-                          {truncateQuery(item.query)}
-                        </p>
-                        <div className="flex items-center space-x-1">
-                          <Clock className="w-2.5 h-2.5 text-muted-foreground" />
-                          <span className="text-[10px] text-muted-foreground">
-                            {formatTimestamp(item.timestamp)}
-                          </span>
-                          <span className="text-[10px] text-muted-foreground">
-                            • {item.results.length} rows
-                          </span>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`history-${contentKey}`}
+              className="p-2"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              transition={{ duration: 0.08, ease: 'easeOut', delay: 0.03 }}
+            >
+              {queryHistory.length === 0 ? (
+                <motion.div
+                  className="text-center py-4"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.1, delay: 0.07 }}
+                >
+                  <p className="text-xs text-muted-foreground">No queries yet</p>
+                </motion.div>
+              ) : (
+                <motion.div
+                  className="space-y-1"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.1, delay: 0.05 }}
+                >
+                  {queryHistory.map((item, index) => {
+                    const isFavorite = favorites.some((fav) => fav.id === item.id)
+                    return (
+                      <motion.button
+                        key={item.id}
+                        onClick={() => onItemSelect(item)}
+                        className="w-full text-left p-2 rounded-md hover:bg-muted/50 transition-colors group relative"
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.07, delay: 0.07 + index * 0.01 }}
+                      >
+                        <div className="space-y-1">
+                          <p className="text-xs font-mono text-foreground line-clamp-2 leading-3">
+                            {truncateQuery(item.query)}
+                          </p>
+                          <div className="flex items-center space-x-1">
+                            <Clock className="w-2.5 h-2.5 text-muted-foreground" />
+                            <span className="text-[10px] text-muted-foreground">
+                              {formatTimestamp(item.timestamp)}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground">
+                              • {item.results.length} rows
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                      {!isFavorite && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            onAddToFavorites(item)
-                          }}
-                          className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-yellow-500 transition-all"
-                        >
-                          <Star className="w-3 h-3" />
-                        </button>
-                      )}
-                    </button>
-                  )
-                })}
-              </div>
-            )}
-          </div>
+                        {!isFavorite && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onAddToFavorites(item)
+                            }}
+                            className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-yellow-500 transition-all"
+                          >
+                            <Star className="w-3 h-3" />
+                          </button>
+                        )}
+                      </motion.button>
+                    )
+                  })}
+                </motion.div>
+              )}
+            </motion.div>
+          </AnimatePresence>
         </div>
       </div>
 
@@ -287,7 +357,7 @@ export const Sidebar = ({
         onOpenChange={setShowAddDialog}
         onConnectionSaved={handleConnectionSaved}
       />
-      
+
       {editingConnection && (
         <ConnectionDialog
           isOpen={!!editingConnection}
