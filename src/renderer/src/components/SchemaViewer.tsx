@@ -113,7 +113,6 @@ export const SchemaViewer = ({ selectedConnection }: SchemaViewerProps) => {
       <AnimatePresence mode="wait">
         {selectedTable && selectedTableSchema ? (
           <TableDetailView
-            key={selectedTable}
             table={selectedTableSchema}
             onBack={handleBackClick}
             selectedConnection={selectedConnection!}
@@ -127,7 +126,6 @@ export const SchemaViewer = ({ selectedConnection }: SchemaViewerProps) => {
             transition={{ duration: 0.067, ease: [0.4, 0, 0.2, 1] }}
             className="p-6"
           >
-            <h1 className="text-2xl font-bold mb-6">Database Schema</h1>
             {schema.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-muted-foreground">No tables found in this database.</p>

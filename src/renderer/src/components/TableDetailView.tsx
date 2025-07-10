@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Button } from './ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table'
@@ -15,6 +15,14 @@ interface TableDetailViewProps {
 
 export const TableDetailView = ({ table, onBack, selectedConnection }: TableDetailViewProps) => {
   const [queryResults, setQueryResults] = useState<any[]>([])
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  // Scroll to top when component mounts
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, [table.tableName])
 
   useEffect(() => {
     const loadAndQuery = async () => {
@@ -54,6 +62,7 @@ export const TableDetailView = ({ table, onBack, selectedConnection }: TableDeta
 
   return (
     <motion.div
+      ref={containerRef}
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -15 }}
@@ -66,7 +75,7 @@ export const TableDetailView = ({ table, onBack, selectedConnection }: TableDeta
           <ArrowLeft className="w-4 h-4" />
           Back
         </Button>
-        <h1 className="text-2xl font-bold">{table.tableName}</h1>
+        <h1 className="text-lg font-bold">{table.tableName}</h1>
       </div>
 
       {/* Schema Definition */}
