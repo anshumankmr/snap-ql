@@ -25,7 +25,6 @@ interface GraphProps {
   data: any[]
   graphMetadata: GraphMetadata
   onMetadataChange?: (metadata: GraphMetadata) => void
-  onRemove?: () => void
 }
 
 function guessDataType(data: any[]): 'date' | 'number' | 'string' {
@@ -41,7 +40,7 @@ function guessDataType(data: any[]): 'date' | 'number' | 'string' {
   return 'string'
 }
 
-export const Graph = ({ data, graphMetadata, onMetadataChange, onRemove }: GraphProps) => {
+export const Graph = ({ data, graphMetadata, onMetadataChange }: GraphProps) => {
   const { theme } = useTheme()
 
   const orangeColors = [

@@ -260,33 +260,6 @@ const Index = () => {
     }
   }
 
-  const handleRemoveGraph = async () => {
-    setActiveTab('results')
-    setGraphMetadata(null)
-
-    // Update the current history item if one is selected
-    if (currentItemId && selectedConnection) {
-      // Check if it's a favorite first
-      const isFavorite = favorites.some((fav) => fav.id === currentItemId)
-
-      if (isFavorite) {
-        await handleFavoriteMetadataChange(currentItemId, {} as GraphMetadata)
-      } else {
-        // Update local state
-        setQueryHistory((prev) =>
-          prev.map((item) => (item.id === currentItemId ? { ...item, graph: undefined } : item))
-        )
-
-        // Persist to storage
-        try {
-          await window.context.updateConnectionHistory(selectedConnection, currentItemId, { graph: undefined })
-        } catch (error) {
-          console.error('Failed to update query history:', error)
-        }
-      }
-    }
-  }
-
   const handleAddToFavorites = async (historyItem: QueryHistory) => {
     if (!selectedConnection) {
       console.error('No connection selected')
@@ -437,7 +410,6 @@ const Index = () => {
                                 data={graphableData}
                                 graphMetadata={graphMetadata}
                                 onMetadataChange={handleGraphMetadataChange}
-                                onRemove={handleRemoveGraph}
                               />
                             ) : (
                               <ResultsTable
