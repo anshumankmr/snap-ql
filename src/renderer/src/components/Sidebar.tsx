@@ -1,6 +1,8 @@
 import { Database, Settings as SettingsIcon, History, Clock, Zap, Star, Plus, Pencil } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { ConnectionDialog } from './ConnectionDialog'
+import { useState, useEffect } from 'react'
 
 interface QueryHistory {
   id: string
@@ -17,6 +19,9 @@ interface SidebarProps {
   onItemSelect: (item: QueryHistory) => void
   onAddToFavorites: (historyItem: QueryHistory) => void
   onRemoveFromFavorites: (favoriteId: string) => void
+  selectedConnection: string | null
+  onConnectionSelect: (connectionName: string | null) => void
+  onNewQuery: () => void
 }
 
 export const Sidebar = ({
@@ -26,8 +31,42 @@ export const Sidebar = ({
   favorites,
   onItemSelect,
   onAddToFavorites,
-  onRemoveFromFavorites
+  onRemoveFromFavorites,
+  selectedConnection,
+  onConnectionSelect,
+  onNewQuery
 }: SidebarProps) => {
+  const [connections, setConnections] = useState<string[]>([])
+  const [showAddDialog, setShowAddDialog] = useState(false)
+  const [editingConnection, setEditingConnection] = useState<string | null>(null)
+
+  useEffect(() => {
+    loadConnections()
+  }, [])
+
+  const loadConnections = async () => {
+    try {
+      const connectionList = await window.context.listConnections()
+      setConnections(connectionList)
+    } catch (error) {
+      console.error('Failed to load connections:', error)
+    }
+  }
+
+  const handleConnectionClick = (connectionName: string) => {
+    if (selectedConnection === connectionName) {
+      // Clicking the already selected connection acts as "new query"
+      onNewQuery()
+    } else {
+      onConnectionSelect(connectionName)
+    }
+  }
+
+  const handleConnectionSaved = () => {
+    loadConnections()
+    setShowAddDialog(false)
+    setEditingConnection(null)
+  }
   const formatTimestamp = (timestamp: Date) => {
     const now = new Date()
     const diff = now.getTime() - timestamp.getTime()
@@ -63,49 +102,58 @@ export const Sidebar = ({
               <Database className="w-3.5 h-3.5 text-muted-foreground" />
               <span className="text-xs font-medium text-muted-foreground">Connections</span>
             </div>
-            <button className="text-muted-foreground hover:text-foreground transition-colors">
+            <button
+              onClick={() => setShowAddDialog(true)}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
               <Plus className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
         <ul className="p-2 space-y-0.5 border-b border-border">
-          {/* Mockup connection buttons */}
-          <li>
-            <button
-              className="w-full flex items-center space-x-2 px-2 py-1.5 rounded-md text-xs font-medium transition-colors text-foreground hover:bg-muted group relative"
-            >
-              <div className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />
-              <span className="truncate">Production DB</span>
-              <Pencil className="w-3 h-3 absolute right-2 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground transition-all" />
-            </button>
-          </li>
-          <li>
-            <button
-              className="w-full flex items-center space-x-2 px-2 py-1.5 rounded-md text-xs font-medium transition-colors text-foreground hover:bg-muted group relative"
-            >
-              <div className="w-2 h-2 rounded-full bg-orange-500 flex-shrink-0 animate-pulse" />
-              <span className="truncate">Staging DB</span>
-              <Pencil className="w-3 h-3 absolute right-2 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground transition-all" />
-            </button>
-          </li>
-          <li>
-            <button
-              className="w-full flex items-center space-x-2 px-2 py-1.5 rounded-md text-xs font-medium transition-colors text-foreground hover:bg-muted group relative"
-            >
-              <div className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0" />
-              <span className="truncate">Local Development</span>
-              <Pencil className="w-3 h-3 absolute right-2 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground transition-all" />
-            </button>
-          </li>
-          {/* Add Database button */}
-          <li className="pt-1">
-            <button
-              className="w-full flex items-center justify-center space-x-2 px-2 py-2 rounded-md text-xs font-medium transition-colors border border-dashed border-muted-foreground/50 text-muted-foreground hover:text-foreground hover:border-foreground"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Add Database</span>
-            </button>
-          </li>
+          {connections.map((connectionName) => (
+            <li key={connectionName}>
+              <button
+                onClick={() => handleConnectionClick(connectionName)}
+                className={cn(
+                  'w-full flex items-center space-x-2 px-2 py-1.5 rounded-md text-xs font-medium transition-colors group relative',
+                  selectedConnection === connectionName
+                    ? 'bg-muted text-foreground'
+                    : 'text-foreground hover:bg-muted'
+                )}
+              >
+                <div className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />
+                <span className="truncate">{connectionName}</span>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setEditingConnection(connectionName)
+                  }}
+                  className="absolute right-2 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground transition-all"
+                >
+                  <Pencil className="w-3 h-3" />
+                </button>
+              </button>
+            </li>
+          ))}
+          
+          {connections.length === 0 && (
+            <>
+              <li className="text-center py-2">
+                <p className="text-xs text-muted-foreground">No connections</p>
+              </li>
+              {/* Add Database button - only show when no connections */}
+              <li className="pt-1">
+                <button
+                  onClick={() => setShowAddDialog(true)}
+                  className="w-full flex items-center justify-center space-x-2 px-2 py-2 rounded-md text-xs font-medium transition-colors border border-dashed border-muted-foreground/50 text-muted-foreground hover:text-foreground hover:border-foreground"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add Database</span>
+                </button>
+              </li>
+            </>
+          )}
         </ul>
       </div>
 
@@ -233,6 +281,22 @@ export const Sidebar = ({
           <span>Settings</span>
         </button>
       </div>
+
+      {/* Connection Dialogs */}
+      <ConnectionDialog
+        isOpen={showAddDialog}
+        onOpenChange={setShowAddDialog}
+        onConnectionSaved={handleConnectionSaved}
+      />
+      
+      {editingConnection && (
+        <ConnectionDialog
+          isOpen={!!editingConnection}
+          onOpenChange={(open) => !open && setEditingConnection(null)}
+          connectionName={editingConnection}
+          onConnectionSaved={handleConnectionSaved}
+        />
+      )}
     </div>
   )
 }

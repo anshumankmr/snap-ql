@@ -35,9 +35,11 @@ import {
   deleteConnection,
   getConnectionHistory,
   addQueryToConnectionHistory,
+  updateConnectionHistory,
   getConnectionFavorites,
   addConnectionFavorite,
   removeConnectionFavorite,
+  updateConnectionFavorite,
   getConnectionPromptExtension,
   setConnectionPromptExtension,
   getConnectionStringForConnection
@@ -336,9 +338,8 @@ app.whenReady().then(() => {
     try {
       await testConnectionString(connectionMetadata.connectionString)
       await createConnection(name, connectionMetadata)
-      return { success: true }
     } catch (error: any) {
-      return { success: false, error: error.message }
+      throw new Error(error.message)
     }
   })
 
@@ -346,9 +347,8 @@ app.whenReady().then(() => {
     try {
       await testConnectionString(connectionMetadata.connectionString)
       await editConnection(name, connectionMetadata)
-      return { success: true }
     } catch (error: any) {
-      return { success: false, error: error.message }
+      throw new Error(error.message)
     }
   })
 
@@ -365,9 +365,9 @@ app.whenReady().then(() => {
   ipcMain.handle('getConnection', async (_, name) => {
     try {
       const connection = await getConnection(name)
-      return { success: true, data: connection }
+      return connection
     } catch (error: any) {
-      return { success: false, error: error.message }
+      throw new Error(error.message)
     }
   })
 
@@ -400,6 +400,16 @@ app.whenReady().then(() => {
     }
   })
 
+  ipcMain.handle('updateConnectionHistory', async (_, name, queryId, updates) => {
+    try {
+      await updateConnectionHistory(name, queryId, updates)
+      return true
+    } catch (error: any) {
+      console.error('Error updating connection history:', error)
+      return false
+    }
+  })
+
   ipcMain.handle('getConnectionFavorites', async (_, name) => {
     try {
       const favorites = await getConnectionFavorites(name)
@@ -426,6 +436,16 @@ app.whenReady().then(() => {
       return true
     } catch (error: any) {
       console.error('Error removing connection favorite:', error)
+      return false
+    }
+  })
+
+  ipcMain.handle('updateConnectionFavorite', async (_, name, favoriteId, updates) => {
+    try {
+      await updateConnectionFavorite(name, favoriteId, updates)
+      return true
+    } catch (error: any) {
+      console.error('Error updating connection favorite:', error)
       return false
     }
   })
@@ -505,6 +525,15 @@ app.whenReady().then(() => {
         error: error.message,
         data: null
       }
+    }
+  })
+
+  ipcMain.handle('testConnectionString', async (_, connectionString) => {
+    try {
+      await testConnectionString(connectionString)
+      return { success: true }
+    } catch (error: any) {
+      return { success: false, error: error.message }
     }
   })
 

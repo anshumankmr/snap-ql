@@ -553,6 +553,18 @@ export async function addQueryToConnectionHistory(
   await setConnectionHistory(name, newHistory)
 }
 
+export async function updateConnectionHistory(
+  name: string,
+  queryId: string,
+  updates: Partial<z.infer<typeof queryHistorySchema>>
+): Promise<void> {
+  const currentHistory = await getConnectionHistory(name)
+  const updatedHistory = currentHistory.map((query) =>
+    query.id === queryId ? { ...query, ...updates } : query
+  )
+  await setConnectionHistory(name, updatedHistory)
+}
+
 export async function getConnectionFavorites(
   name: string
 ): Promise<z.infer<typeof favoritesSchema>[]> {
@@ -594,6 +606,18 @@ export async function removeConnectionFavorite(name: string, favoriteId: string)
   const currentFavorites = await getConnectionFavorites(name)
   const newFavorites = currentFavorites.filter((fav) => fav.id !== favoriteId)
   await setConnectionFavorites(name, newFavorites)
+}
+
+export async function updateConnectionFavorite(
+  name: string,
+  favoriteId: string,
+  updates: Partial<z.infer<typeof favoritesSchema>>
+): Promise<void> {
+  const currentFavorites = await getConnectionFavorites(name)
+  const updatedFavorites = currentFavorites.map((favorite) =>
+    favorite.id === favoriteId ? { ...favorite, ...updates } : favorite
+  )
+  await setConnectionFavorites(name, updatedFavorites)
 }
 
 export async function getConnectionPromptExtension(name: string): Promise<string | undefined> {

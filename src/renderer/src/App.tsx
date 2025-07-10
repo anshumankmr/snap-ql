@@ -34,18 +34,44 @@ const Index = () => {
   const [currentItemId, setCurrentItemId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [selectedConnection, setSelectedConnection] = useState<string | null>(null)
+  const [connections, setConnections] = useState<string[]>([])
 
   const { toast } = useToast()
 
   const graphableData = queryResults.slice(0, 10000) // limit to 10k rows for performance
 
-  // Load query history and favorites on startup
+  // Load connections on startup and set default connection
   useEffect(() => {
-    const loadData = async () => {
+    const loadConnections = async () => {
+      try {
+        const connectionList = await window.context.listConnections()
+        setConnections(connectionList)
+        
+        // Set first connection as default if no connection is selected
+        if (connectionList.length > 0 && !selectedConnection) {
+          setSelectedConnection(connectionList[0])
+        }
+      } catch (error) {
+        console.error('Failed to load connections:', error)
+      }
+    }
+    loadConnections()
+  }, [selectedConnection])
+
+  // Load connection-specific history and favorites when connection changes
+  useEffect(() => {
+    const loadConnectionData = async () => {
+      if (!selectedConnection) {
+        setQueryHistory([])
+        setFavorites([])
+        return
+      }
+
       try {
         const [history, favoritesData] = await Promise.all([
-          window.context.getQueryHistory(),
-          window.context.getFavorites()
+          window.context.getConnectionHistory(selectedConnection),
+          window.context.getConnectionFavorites(selectedConnection)
         ])
 
         // Convert timestamp strings back to Date objects
@@ -61,16 +87,21 @@ const Index = () => {
         }))
         setFavorites(favoritesWithDates)
       } catch (error) {
-        console.error('Failed to load data:', error)
+        console.error('Failed to load connection data:', error)
       }
     }
-    loadData()
-  }, [])
+    loadConnectionData()
+  }, [selectedConnection])
 
   const runQuery = async (query: string) => {
+    if (!selectedConnection) {
+      setError('No connection selected')
+      return
+    }
+
     setIsLoading(true)
     try {
-      const res = await window.context.runQuery(query)
+      const res = await window.context.runQueryForConnection(selectedConnection, query)
       if (res.error) {
         setError(res.error)
         setQueryResults([])
@@ -109,7 +140,7 @@ const Index = () => {
               ...updatedFavorite,
               timestamp: updatedFavorite.timestamp.toISOString()
             }
-            await window.context.updateFavorite(currentFavorite.id, favoriteEntryForStorage)
+            await window.context.updateConnectionFavorite(selectedConnection, currentFavorite.id, favoriteEntryForStorage)
           } catch (error) {
             console.error('Failed to update favorite:', error)
           }
@@ -138,7 +169,7 @@ const Index = () => {
             ...historyEntry,
             timestamp: historyEntry.timestamp.toISOString() // Convert Date to string for storage
           }
-          await window.context.addQueryToHistory(historyEntryForStorage)
+          await window.context.addQueryToConnectionHistory(selectedConnection, historyEntryForStorage)
         } catch (error) {
           console.error('Failed to save query to history:', error)
         }
@@ -152,6 +183,11 @@ const Index = () => {
   }
 
   const handleAIQuery = async (userQuery: string) => {
+    if (!selectedConnection) {
+      setError('No connection selected')
+      return
+    }
+
     setIsGenerating(true)
     setGraphMetadata(null)
     toast({
@@ -160,7 +196,7 @@ const Index = () => {
       duration: 1500
     })
     try {
-      const res = await window.context.generateQuery(userQuery, sqlQuery ?? '')
+      const res = await window.context.generateQueryForConnection(selectedConnection, userQuery, sqlQuery ?? '')
       if (res.error) {
         setError(res.error)
       } else {
@@ -210,7 +246,7 @@ const Index = () => {
 
         // Persist to storage
         try {
-          await window.context.updateQueryHistory(currentItemId, { graph: newMetadata })
+          await window.context.updateConnectionHistory(selectedConnection!, currentItemId, { graph: newMetadata })
         } catch (error) {
           console.error('Failed to update query history:', error)
         }
@@ -222,28 +258,40 @@ const Index = () => {
     setGraphMetadata(null)
 
     // Update the current history item if one is selected
-    if (currentItemId) {
-      // Update local state
-      setQueryHistory((prev) =>
-        prev.map((item) => (item.id === currentItemId ? { ...item, graph: undefined } : item))
-      )
+    if (currentItemId && selectedConnection) {
+      // Check if it's a favorite first
+      const isFavorite = favorites.some((fav) => fav.id === currentItemId)
 
-      // Persist to storage
-      try {
-        await window.context.updateQueryHistory(currentItemId, { graph: undefined })
-      } catch (error) {
-        console.error('Failed to update query history:', error)
+      if (isFavorite) {
+        await handleFavoriteMetadataChange(currentItemId, {} as GraphMetadata)
+      } else {
+        // Update local state
+        setQueryHistory((prev) =>
+          prev.map((item) => (item.id === currentItemId ? { ...item, graph: undefined } : item))
+        )
+
+        // Persist to storage
+        try {
+          await window.context.updateConnectionHistory(selectedConnection, currentItemId, { graph: undefined })
+        } catch (error) {
+          console.error('Failed to update query history:', error)
+        }
       }
     }
   }
 
   const handleAddToFavorites = async (historyItem: QueryHistory) => {
+    if (!selectedConnection) {
+      console.error('No connection selected')
+      return
+    }
+
     try {
       const favoriteEntry = {
         ...historyItem,
         timestamp: historyItem.timestamp.toISOString()
       }
-      await window.context.addFavorite(favoriteEntry)
+      await window.context.addConnectionFavorite(selectedConnection, favoriteEntry)
 
       // Update local favorites state
       setFavorites((prev) => [historyItem, ...prev])
@@ -253,8 +301,13 @@ const Index = () => {
   }
 
   const handleRemoveFromFavorites = async (favoriteId: string) => {
+    if (!selectedConnection) {
+      console.error('No connection selected')
+      return
+    }
+
     try {
-      await window.context.removeFavorite(favoriteId)
+      await window.context.removeConnectionFavorite(selectedConnection, favoriteId)
 
       // Update local favorites state
       setFavorites((prev) => prev.filter((fav) => fav.id !== favoriteId))
@@ -264,6 +317,11 @@ const Index = () => {
   }
 
   const handleFavoriteMetadataChange = async (favoriteId: string, newMetadata: GraphMetadata) => {
+    if (!selectedConnection) {
+      console.error('No connection selected')
+      return
+    }
+
     // Update current state if this is the active item
     if (currentItemId === favoriteId) {
       setGraphMetadata(newMetadata)
@@ -276,10 +334,30 @@ const Index = () => {
 
     // Persist to storage
     try {
-      await window.context.updateFavorite(favoriteId, { graph: newMetadata })
+      await window.context.updateConnectionFavorite(selectedConnection, favoriteId, { graph: newMetadata })
     } catch (error) {
       console.error('Failed to update favorite:', error)
     }
+  }
+
+  const handleConnectionSelect = (connectionName: string | null) => {
+    setSelectedConnection(connectionName)
+    setCurrentView('editor') // Switch to editor view when selecting a connection
+    
+    // Clear the editor state when switching connections
+    setSqlQuery('SELECT * FROM information_schema.tables;')
+    setQueryResults([])
+    setGraphMetadata(null)
+    setCurrentItemId(null)
+    setError(null)
+  }
+
+  const handleNewQuery = () => {
+    setSqlQuery('SELECT * FROM information_schema.tables;')
+    setQueryResults([])
+    setGraphMetadata(null)
+    setCurrentItemId(null)
+    setError(null)
   }
 
   return (
@@ -294,6 +372,9 @@ const Index = () => {
             onItemSelect={handleItemSelect}
             onAddToFavorites={handleAddToFavorites}
             onRemoveFromFavorites={handleRemoveFromFavorites}
+            selectedConnection={selectedConnection}
+            onConnectionSelect={handleConnectionSelect}
+            onNewQuery={handleNewQuery}
           />
         </div>
 
@@ -307,34 +388,45 @@ const Index = () => {
           <div className="flex-1 overflow-y-auto">
             <div className="p-3">
               {currentView === 'editor' ? (
-                <div className="space-y-3">
-                  <div>
-                    <SQLEditor
-                      value={sqlQuery}
-                      onChange={setSqlQuery}
-                      onRun={() => runQuery(sqlQuery)}
-                      isLoading={isLoading}
-                    />
+                selectedConnection ? (
+                  <div className="space-y-3">
+                    <div>
+                      <SQLEditor
+                        value={sqlQuery}
+                        onChange={setSqlQuery}
+                        onRun={() => runQuery(sqlQuery)}
+                        isLoading={isLoading}
+                      />
+                    </div>
+                    {error && <div className="text-red-500">{error}</div>}
+                    {graphMetadata && queryResults.length > 0 && (
+                      <Graph
+                        data={graphableData}
+                        graphMetadata={graphMetadata}
+                        onMetadataChange={handleGraphMetadataChange}
+                        onRemove={handleRemoveGraph}
+                      />
+                    )}
+                    <div>
+                      <ResultsTable
+                        results={queryResults}
+                        isLoading={isLoading}
+                        query={sqlQuery}
+                        graphMetadata={graphMetadata}
+                        onCreateGraph={handleGraphMetadataChange}
+                      />
+                    </div>
                   </div>
-                  {error && <div className="text-red-500">{error}</div>}
-                  {graphMetadata && queryResults.length > 0 && (
-                    <Graph
-                      data={graphableData}
-                      graphMetadata={graphMetadata}
-                      onMetadataChange={handleGraphMetadataChange}
-                      onRemove={handleRemoveGraph}
-                    />
-                  )}
-                  <div>
-                    <ResultsTable
-                      results={queryResults}
-                      isLoading={isLoading}
-                      query={sqlQuery}
-                      graphMetadata={graphMetadata}
-                      onCreateGraph={handleGraphMetadataChange}
-                    />
+                ) : (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-center">
+                      <h2 className="text-xl font-semibold mb-2">No Connection Selected</h2>
+                      <p className="text-muted-foreground">
+                        Please select a connection from the sidebar to start querying your database.
+                      </p>
+                    </div>
                   </div>
-                </div>
+                )
               ) : (
                 <Settings />
               )}

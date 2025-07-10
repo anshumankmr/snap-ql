@@ -57,12 +57,16 @@ try {
       await ipcRenderer.invoke('getConnectionHistory', name),
     addQueryToConnectionHistory: async (name: string, queryEntry: any) =>
       await ipcRenderer.invoke('addQueryToConnectionHistory', name, queryEntry),
+    updateConnectionHistory: async (name: string, queryId: string, updates: any) =>
+      await ipcRenderer.invoke('updateConnectionHistory', name, queryId, updates),
     getConnectionFavorites: async (name: string) =>
       await ipcRenderer.invoke('getConnectionFavorites', name),
     addConnectionFavorite: async (name: string, favorite: any) =>
       await ipcRenderer.invoke('addConnectionFavorite', name, favorite),
     removeConnectionFavorite: async (name: string, favoriteId: string) =>
       await ipcRenderer.invoke('removeConnectionFavorite', name, favoriteId),
+    updateConnectionFavorite: async (name: string, favoriteId: string, updates: any) =>
+      await ipcRenderer.invoke('updateConnectionFavorite', name, favoriteId, updates),
     getConnectionPromptExtension: async (name: string) =>
       await ipcRenderer.invoke('getConnectionPromptExtension', name),
     setConnectionPromptExtension: async (name: string, promptExtension: string) =>
@@ -70,7 +74,9 @@ try {
     runQueryForConnection: async (name: string, query: string) =>
       await ipcRenderer.invoke('runQueryForConnection', name, query),
     generateQueryForConnection: async (name: string, input: string, existingQuery: string) =>
-      await ipcRenderer.invoke('generateQueryForConnection', name, input, existingQuery)
+      await ipcRenderer.invoke('generateQueryForConnection', name, input, existingQuery),
+    testConnectionString: async (connectionString: string) =>
+      await ipcRenderer.invoke('testConnectionString', connectionString)
   })
 } catch (error) {
   console.error(error)
