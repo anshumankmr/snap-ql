@@ -201,7 +201,7 @@ export const Sidebar = ({
             {/* Favorites Section */}
             {favorites.length > 0 && (
               <div>
-                <div className="p-2 border-b border-border">
+                <div className="sticky top-0 bg-card p-2 border-b border-border z-10">
                   <div className="flex items-center space-x-2">
                     <Star className="w-3.5 h-3.5 text-yellow-500" />
                     <span className="text-xs font-medium text-muted-foreground">Favorites</span>
@@ -254,7 +254,7 @@ export const Sidebar = ({
             )}
 
             {/* History Section */}
-            <div className="p-2 border-b border-border">
+            <div className="sticky top-0 bg-card p-2 border-b border-border z-10">
               <div className="flex items-center space-x-2">
                 <History className="w-3.5 h-3.5 text-muted-foreground" />
                 <span className="text-xs font-medium text-muted-foreground">Query History</span>
