@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 import { Database } from 'lucide-react'
 import { TableSchema } from './SchemaViewer'
+import { motion } from 'framer-motion'
 
 interface SchemaCardProps {
   table: TableSchema
@@ -29,10 +30,17 @@ export const SchemaCard = ({ table, onClick }: SchemaCardProps) => {
   const hasMore = table.columns.length > 4
 
   return (
-    <Card
-      className="cursor-pointer hover:shadow-md transition-all duration-200 hover:scale-[1.02]"
-      onClick={onClick}
+    <motion.div
+      whileHover={{ 
+        y: -2, 
+        boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" 
+      }}
+      transition={{ type: "spring", stiffness: 300, damping: 20 }}
     >
+      <Card
+        className="cursor-pointer transition-shadow duration-200"
+        onClick={onClick}
+      >
       <CardHeader className="pb-3">
         <CardTitle className="text-sm flex items-center gap-2">
           <Database className="w-4 h-4" />
@@ -60,5 +68,6 @@ export const SchemaCard = ({ table, onClick }: SchemaCardProps) => {
         </div>
       </CardContent>
     </Card>
+    </motion.div>
   )
 }

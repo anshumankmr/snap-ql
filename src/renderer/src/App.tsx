@@ -63,6 +63,7 @@ const Index = () => {
       return
     }
 
+    
     setIsLoading(true)
     try {
       const res = await window.context.runQueryForConnection(selectedConnection, query)
@@ -294,7 +295,16 @@ const Index = () => {
                             isLoading={isLoading}
                           />
                         </div>
-                        {error && <div className="text-red-500">{error}</div>}
+                        {error && (
+                          <motion.div 
+                            className="text-red-500"
+                            initial={{ x: 0 }}
+                            animate={{ x: [-2, 2, -2, 2, 0] }}
+                            transition={{ duration: 0.3, ease: "easeInOut" }}
+                          >
+                            {error}
+                          </motion.div>
+                        )}
 
                         {/* Tabs for Graph and Results */}
                         {queryResults.length > 0 && (

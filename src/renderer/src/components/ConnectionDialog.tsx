@@ -5,6 +5,7 @@ import { Label } from './ui/label'
 import { Textarea } from './ui/textarea'
 import { TestTube } from 'lucide-react'
 import { useToast } from '../hooks/use-toast'
+import { motion } from 'framer-motion'
 import {
   Dialog,
   DialogContent,
@@ -193,7 +194,16 @@ export const ConnectionDialog = ({
         </p>
       </div>
 
-      {errorMessage && <p className="text-sm text-destructive">{errorMessage}</p>}
+      {errorMessage && (
+        <motion.p 
+          className="text-sm text-destructive"
+          initial={{ x: 0 }}
+          animate={{ x: [-2, 2, -2, 2, 0] }}
+          transition={{ duration: 0.3, ease: "easeInOut" }}
+        >
+          {errorMessage}
+        </motion.p>
+      )}
       {successMessage && <p className="text-sm text-green-600">{successMessage}</p>}
 
       <div className="flex gap-2 pt-2">

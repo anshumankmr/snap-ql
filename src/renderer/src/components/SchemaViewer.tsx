@@ -92,10 +92,15 @@ export const SchemaViewer = ({ selectedConnection }: SchemaViewerProps) => {
   if (error) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="text-center">
+        <motion.div 
+          className="text-center"
+          initial={{ x: 0 }}
+          animate={{ x: [-2, 2, -2, 2, 0] }}
+          transition={{ duration: 0.3, ease: "easeInOut" }}
+        >
           <h2 className="text-xl font-semibold mb-2 text-red-500">Error Loading Schema</h2>
           <p className="text-muted-foreground">{error}</p>
-        </div>
+        </motion.div>
       </div>
     )
   }

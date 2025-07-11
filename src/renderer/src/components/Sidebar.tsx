@@ -148,10 +148,16 @@ export const Sidebar = ({
                   <motion.div
                     className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0"
                     animate={{
-                      scale: selectedConnection === connectionName ? 1.2 : 1,
+                      scale: selectedConnection === connectionName 
+                        ? [1, 1.4, 1] 
+                        : [1, 1.2, 1],
                       opacity: selectedConnection === connectionName ? 1 : 0.7
                     }}
-                    transition={{ duration: 0.07 }}
+                    transition={{ 
+                      duration: selectedConnection === connectionName ? 3.5 : 0.07,
+                      repeat: selectedConnection === connectionName ? Infinity : 0,
+                      ease: "easeInOut"
+                    }}
                   />
                   <span className="truncate">{connectionName}</span>
                   <button
@@ -207,7 +213,11 @@ export const Sidebar = ({
                     <span className="text-xs font-medium text-muted-foreground">Favorites</span>
                   </div>
                 </div>
-                <div className="p-2 border-b border-border">
+                <motion.div 
+                  className="p-2 border-b border-border"
+                  animate={{ scale: favorites.length > 0 ? 1 : 0.98 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                >
                   <motion.div
                     className="space-y-1"
                     initial={{ opacity: 0 }}
@@ -249,7 +259,7 @@ export const Sidebar = ({
                       </motion.button>
                     ))}
                   </motion.div>
-                </div>
+                </motion.div>
               </div>
             )}
 
@@ -261,7 +271,11 @@ export const Sidebar = ({
               </div>
             </div>
 
-            <div className="p-2">
+            <motion.div 
+              className="p-2"
+              animate={{ scale: queryHistory.length > 0 ? 1 : 0.98 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            >
               {queryHistory.length === 0 ? (
                 <motion.div
                   className="text-center py-4"
@@ -319,7 +333,7 @@ export const Sidebar = ({
                   })}
                 </motion.div>
               )}
-            </div>
+            </motion.div>
           </motion.div>
         </AnimatePresence>
       </div>

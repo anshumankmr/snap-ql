@@ -5,6 +5,7 @@ import { Card } from '../components/ui/card'
 import { Switch } from '../components/ui/switch'
 import { Label } from '../components/ui/label'
 import { Bot, Send, Sparkles, Play } from 'lucide-react'
+import { motion } from 'framer-motion'
 
 interface AIChatProps {
   onUserQuery: (query: string, autoRun: boolean) => void
@@ -70,7 +71,38 @@ export const AIChat = ({ onUserQuery, isGenerating }: AIChatProps) => {
           className="flex items-center space-x-1.5 h-8 px-3 text-xs"
         >
           {isGenerating ? (
-            <Sparkles className="w-3.5 h-3.5 animate-pulse" />
+            <div className="flex items-center space-x-1">
+              <motion.div
+                className="w-1 h-1 bg-current rounded-full"
+                animate={{ scale: [0.8, 1.2, 0.8] }}
+                transition={{ 
+                  duration: 1.2, 
+                  repeat: Infinity, 
+                  delay: 0,
+                  ease: "easeInOut"
+                }}
+              />
+              <motion.div
+                className="w-1 h-1 bg-current rounded-full"
+                animate={{ scale: [0.8, 1.2, 0.8] }}
+                transition={{ 
+                  duration: 1.2, 
+                  repeat: Infinity, 
+                  delay: 0.2,
+                  ease: "easeInOut"
+                }}
+              />
+              <motion.div
+                className="w-1 h-1 bg-current rounded-full"
+                animate={{ scale: [0.8, 1.2, 0.8] }}
+                transition={{ 
+                  duration: 1.2, 
+                  repeat: Infinity, 
+                  delay: 0.4,
+                  ease: "easeInOut"
+                }}
+              />
+            </div>
           ) : autoRun ? (
             <Play className="w-3.5 h-3.5" />
           ) : (
