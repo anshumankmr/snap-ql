@@ -324,7 +324,7 @@ const Index = () => {
                                 ease: [0.4, 0, 0.2, 1]
                               }}
                             >
-                              <TabsList className="grid w-full grid-cols-2">
+                              <TabsList className="grid grid-cols-2 w-fit">
                                 {graphMetadata && (
                                   <TabsTrigger
                                     value="visualize"
