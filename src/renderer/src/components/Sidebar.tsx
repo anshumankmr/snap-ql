@@ -188,26 +188,26 @@ export const Sidebar = ({
         </ul>
       </div>
 
-      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-        {/* Favorites Section */}
+      {/* Combined Favorites and History Section - Single Scroll View */}
+      <div className="flex-1 overflow-y-auto scrollbar-hide">
         <AnimatePresence mode="wait">
-          {favorites.length > 0 && (
-            <motion.div
-              key={`favorites-${contentKey}`}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.07, ease: 'easeOut' }}
-            >
-              <div className="p-2 border-b border-border flex-shrink-0">
-                <div className="flex items-center space-x-2">
-                  <Star className="w-3.5 h-3.5 text-yellow-500" />
-                  <span className="text-xs font-medium text-muted-foreground">Favorites</span>
+          <motion.div
+            key={`content-${contentKey}`}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            transition={{ duration: 0.08, ease: 'easeOut' }}
+          >
+            {/* Favorites Section */}
+            {favorites.length > 0 && (
+              <div>
+                <div className="p-2 border-b border-border">
+                  <div className="flex items-center space-x-2">
+                    <Star className="w-3.5 h-3.5 text-yellow-500" />
+                    <span className="text-xs font-medium text-muted-foreground">Favorites</span>
+                  </div>
                 </div>
-              </div>
-
-              <div className="p-2 border-b border-border flex-shrink-0">
-                <div className="max-h-32 overflow-y-auto scrollbar-hide">
+                <div className="p-2 border-b border-border">
                   <motion.div
                     className="space-y-1"
                     initial={{ opacity: 0 }}
@@ -251,28 +251,17 @@ export const Sidebar = ({
                   </motion.div>
                 </div>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            )}
 
-        {/* History Section */}
-        <div className="p-2 border-b border-border flex-shrink-0">
-          <div className="flex items-center space-x-2">
-            <History className="w-3.5 h-3.5 text-muted-foreground" />
-            <span className="text-xs font-medium text-muted-foreground">Query History</span>
-          </div>
-        </div>
+            {/* History Section */}
+            <div className="p-2 border-b border-border">
+              <div className="flex items-center space-x-2">
+                <History className="w-3.5 h-3.5 text-muted-foreground" />
+                <span className="text-xs font-medium text-muted-foreground">Query History</span>
+              </div>
+            </div>
 
-        <div className="flex-1 overflow-y-auto scrollbar-hide">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={`history-${contentKey}`}
-              className="p-2"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              transition={{ duration: 0.08, ease: 'easeOut', delay: 0.03 }}
-            >
+            <div className="p-2">
               {queryHistory.length === 0 ? (
                 <motion.div
                   className="text-center py-4"
@@ -330,9 +319,9 @@ export const Sidebar = ({
                   })}
                 </motion.div>
               )}
-            </motion.div>
-          </AnimatePresence>
-        </div>
+            </div>
+          </motion.div>
+        </AnimatePresence>
       </div>
 
       {/* Settings button - sticky at bottom */}

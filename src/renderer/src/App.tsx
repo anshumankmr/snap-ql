@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Sidebar } from './components/Sidebar'
 import { SQLEditor } from './components/SQLEditor'
 import { ResultsTable } from './components/ResultsTable'
@@ -13,6 +13,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from './components/ui/tabs'
 import { BarChart3, Table, Code, Layout } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { SchemaViewer } from './components/SchemaViewer'
+import { useConnections } from './hooks/useConnections'
+import { useConnection } from './hooks/useConnection'
 
 interface QueryHistory {
   id: string
@@ -34,68 +36,26 @@ const Index = () => {
   const [graphMetadata, setGraphMetadata] = useState<GraphMetadata | null>(null)
   const [queryResults, setQueryResults] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(false)
-  const [queryHistory, setQueryHistory] = useState<QueryHistory[]>([])
-  const [favorites, setFavorites] = useState<QueryHistory[]>([])
   const [currentItemId, setCurrentItemId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
-  const [selectedConnection, setSelectedConnection] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'visualize' | 'results'>('results')
 
   const { toast } = useToast()
 
+  // Use the new connection hooks
+  const { selectedConnection, selectConnection } = useConnections()
+  const {
+    history: queryHistory,
+    favorites,
+    addToHistory,
+    updateHistory,
+    addToFavorites,
+    removeFromFavorites,
+    updateFavorite
+  } = useConnection(selectedConnection)
+
   const graphableData = queryResults.slice(0, 10000) // limit to 10k rows for performance
-
-  // Load connections on startup and set default connection
-  useEffect(() => {
-    const loadConnections = async () => {
-      try {
-        const connectionList = await window.context.listConnections()
-
-        // Set first connection as default if no connection is selected
-        if (connectionList.length > 0 && !selectedConnection) {
-          setSelectedConnection(connectionList[0])
-        }
-      } catch (error) {
-        console.error('Failed to load connections:', error)
-      }
-    }
-    loadConnections()
-  }, [selectedConnection])
-
-  // Load connection-specific history and favorites when connection changes
-  useEffect(() => {
-    const loadConnectionData = async () => {
-      if (!selectedConnection) {
-        setQueryHistory([])
-        setFavorites([])
-        return
-      }
-
-      try {
-        const [history, favoritesData] = await Promise.all([
-          window.context.getConnectionHistory(selectedConnection),
-          window.context.getConnectionFavorites(selectedConnection)
-        ])
-
-        // Convert timestamp strings back to Date objects
-        const historyWithDates = history.map((item: any) => ({
-          ...item,
-          timestamp: new Date(item.timestamp)
-        }))
-        setQueryHistory(historyWithDates)
-
-        const favoritesWithDates = favoritesData.map((item: any) => ({
-          ...item,
-          timestamp: new Date(item.timestamp)
-        }))
-        setFavorites(favoritesWithDates)
-      } catch (error) {
-        console.error('Failed to load connection data:', error)
-      }
-    }
-    loadConnectionData()
-  }, [selectedConnection])
 
   const runQuery = async (query: string, metadata?: GraphMetadata | null) => {
     if (!selectedConnection) {
@@ -120,7 +80,7 @@ const Index = () => {
 
         // Use passed metadata or fall back to state
         const effectiveMetadata = metadata !== undefined ? metadata : graphMetadata
-        
+
         // Switch to visualize tab if graph metadata exists
         if (effectiveMetadata) {
           setActiveTab('visualize')
@@ -133,64 +93,16 @@ const Index = () => {
 
         if (currentFavorite) {
           // Update the favorite with new results and timestamp
-          const updatedFavorite = {
-            ...currentFavorite,
+          await updateFavorite(currentFavorite.id, {
             results: res.data,
             query: query,
             timestamp: new Date(),
             graph: effectiveMetadata ?? undefined
-          }
-
-          // Update local favorites state
-          setFavorites((prev) =>
-            prev.map((fav) => (fav.id === currentFavorite.id ? updatedFavorite : fav))
-          )
-
-          // Persist favorite update to storage
-          try {
-            const favoriteEntryForStorage = {
-              ...updatedFavorite,
-              timestamp: updatedFavorite.timestamp.toISOString()
-            }
-            await window.context.updateConnectionFavorite(
-              selectedConnection,
-              currentFavorite.id,
-              favoriteEntryForStorage
-            )
-          } catch (error) {
-            console.error('Failed to update favorite:', error)
-          }
-        }
-
-        // Always add to history (whether it's a favorite or not)
-        const historyEntry: QueryHistory = {
-          id: Date.now().toString(),
-          query: query,
-          results: res.data,
-          graph: graphMetadata ?? undefined,
-          timestamp: new Date()
-        }
-
-        // Update local state
-        setQueryHistory((prev) => [historyEntry, ...prev.slice(0, 19)]) // Keep last 20 queries
-
-        // If we updated a favorite, keep the favorite ID as current, otherwise use the new history entry ID
-        if (!currentFavorite) {
-          setCurrentItemId(historyEntry.id)
-        }
-
-        // Persist to storage
-        try {
-          const historyEntryForStorage = {
-            ...historyEntry,
-            timestamp: historyEntry.timestamp.toISOString() // Convert Date to string for storage
-          }
-          await window.context.addQueryToConnectionHistory(
-            selectedConnection,
-            historyEntryForStorage
-          )
-        } catch (error) {
-          console.error('Failed to save query to history:', error)
+          })
+        } else {
+          // Add to history and set current item ID
+          const newHistoryId = await addToHistory(query, res.data, effectiveMetadata ?? undefined)
+          setCurrentItemId(newHistoryId)
         }
       }
     } catch (error: any) {
@@ -275,89 +187,23 @@ const Index = () => {
       const isFavorite = favorites.some((fav) => fav.id === currentItemId)
 
       if (isFavorite) {
-        await handleFavoriteMetadataChange(currentItemId, newMetadata)
+        await updateFavorite(currentItemId, { graph: newMetadata })
       } else {
-        // Update local history state
-        setQueryHistory((prev) =>
-          prev.map((item) => (item.id === currentItemId ? { ...item, graph: newMetadata } : item))
-        )
-
-        // Persist to storage
-        try {
-          await window.context.updateConnectionHistory(selectedConnection!, currentItemId, {
-            graph: newMetadata
-          })
-        } catch (error) {
-          console.error('Failed to update query history:', error)
-        }
+        await updateHistory(currentItemId, { graph: newMetadata })
       }
     }
   }
 
   const handleAddToFavorites = async (historyItem: QueryHistory) => {
-    if (!selectedConnection) {
-      console.error('No connection selected')
-      return
-    }
-
-    try {
-      const favoriteEntry = {
-        ...historyItem,
-        timestamp: historyItem.timestamp.toISOString()
-      }
-      await window.context.addConnectionFavorite(selectedConnection, favoriteEntry)
-
-      // Update local favorites state
-      setFavorites((prev) => [historyItem, ...prev])
-    } catch (error) {
-      console.error('Failed to add to favorites:', error)
-    }
+    await addToFavorites(historyItem)
   }
 
   const handleRemoveFromFavorites = async (favoriteId: string) => {
-    if (!selectedConnection) {
-      console.error('No connection selected')
-      return
-    }
-
-    try {
-      await window.context.removeConnectionFavorite(selectedConnection, favoriteId)
-
-      // Update local favorites state
-      setFavorites((prev) => prev.filter((fav) => fav.id !== favoriteId))
-    } catch (error) {
-      console.error('Failed to remove from favorites:', error)
-    }
-  }
-
-  const handleFavoriteMetadataChange = async (favoriteId: string, newMetadata: GraphMetadata) => {
-    if (!selectedConnection) {
-      console.error('No connection selected')
-      return
-    }
-
-    // Update current state if this is the active item
-    if (currentItemId === favoriteId) {
-      setGraphMetadata(newMetadata)
-    }
-
-    // Update local favorites state
-    setFavorites((prev) =>
-      prev.map((item) => (item.id === favoriteId ? { ...item, graph: newMetadata } : item))
-    )
-
-    // Persist to storage
-    try {
-      await window.context.updateConnectionFavorite(selectedConnection, favoriteId, {
-        graph: newMetadata
-      })
-    } catch (error) {
-      console.error('Failed to update favorite:', error)
-    }
+    await removeFromFavorites(favoriteId)
   }
 
   const handleConnectionSelect = (connectionName: string | null) => {
-    setSelectedConnection(connectionName)
+    selectConnection(connectionName)
     setCurrentView('editor') // Switch to editor view when selecting a connection
 
     // Clear the editor state when switching connections
