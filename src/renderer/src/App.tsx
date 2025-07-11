@@ -97,7 +97,7 @@ const Index = () => {
     loadConnectionData()
   }, [selectedConnection])
 
-  const runQuery = async (query: string) => {
+  const runQuery = async (query: string, metadata?: GraphMetadata | null) => {
     if (!selectedConnection) {
       setError('No connection selected')
       return
@@ -118,6 +118,14 @@ const Index = () => {
           duration: 1500
         })
 
+        // Use passed metadata or fall back to state
+        const effectiveMetadata = metadata !== undefined ? metadata : graphMetadata
+        
+        // Switch to visualize tab if graph metadata exists
+        if (effectiveMetadata) {
+          setActiveTab('visualize')
+        }
+
         // Check if the currently selected item is a favorite
         const currentFavorite = currentItemId
           ? favorites.find((fav) => fav.id === currentItemId)
@@ -130,7 +138,7 @@ const Index = () => {
             results: res.data,
             query: query,
             timestamp: new Date(),
-            graph: graphMetadata ?? undefined
+            graph: effectiveMetadata ?? undefined
           }
 
           // Update local favorites state
@@ -193,7 +201,7 @@ const Index = () => {
     }
   }
 
-  const handleAIQuery = async (userQuery: string) => {
+  const handleAIQuery = async (userQuery: string, autoRun: boolean) => {
     if (!selectedConnection) {
       setError('No connection selected')
       return
@@ -216,18 +224,28 @@ const Index = () => {
         setError(res.error)
       } else {
         setSqlQuery(res.data.query)
+        let newMetadata: GraphMetadata | null = null
         if (res.data.graphXColumn && res.data.graphYColumns && res.data.graphYColumns.length > 0) {
-          setGraphMetadata({
+          newMetadata = {
             graphXColumn: res.data.graphXColumn,
             graphYColumns: res.data.graphYColumns
+          }
+          setGraphMetadata(newMetadata)
+        }
+
+        if (autoRun) {
+          // Automatically run the query when auto-run is enabled
+          // Pass the metadata directly to avoid race condition
+          await runQuery(res.data.query, newMetadata)
+        } else {
+          // Show success toast with option to run manually
+          toast({
+            title: 'Query generated!',
+            description: 'The query was generated successfully',
+            duration: 1500,
+            action: <Button onClick={() => runQuery(res.data.query)}>Run!</Button>
           })
         }
-        toast({
-          title: 'Query generated!',
-          description: 'The query was generated successfully',
-          duration: 1500,
-          action: <Button onClick={() => runQuery(res.data.query)}>Run!</Button>
-        })
       }
     } catch (error: any) {
       setError(error.message)
