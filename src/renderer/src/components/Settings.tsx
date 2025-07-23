@@ -16,13 +16,15 @@ import { useToast } from '../hooks/use-toast'
 import { ModeToggle } from './ui/mode-toggle'
 
 export const Settings = () => {
-  const [aiProvider, setAiProvider] = useState<'openai' | 'claude'>('openai')
+  const [aiProvider, setAiProvider] = useState<'openai' | 'claude' | 'ollama'>('openai')
   const [openAIApiKey, setOpenAIApiKey] = useState<string>('')
   const [claudeApiKey, setClaudeApiKey] = useState<string>('')
   const [apiKeyError, setApiKeyError] = useState<string | null>(null)
   const [apiKeySuccess, setApiKeySuccess] = useState<string | null>(null)
   const [isSavingApiKey, setIsSavingApiKey] = useState(false)
   const [openAIBaseUrl, setOpenAIBaseUrl] = useState<string>('')
+  const [ollamaBaseUrl, setOllamaBaseUrl] = useState<string>('')
+  const [ollamaModel, setOllamaModel] = useState<string>('')
   const [baseUrlError, setBaseUrlError] = useState<string | null>(null)
   const [baseUrlSuccess, setBaseUrlSuccess] = useState<string | null>(null)
   const [isSavingBaseUrl, setIsSavingBaseUrl] = useState(false)
@@ -39,8 +41,12 @@ export const Settings = () => {
   useEffect(() => {
     const loadSavedAiProvider = async () => {
       try {
-        const savedAiProvider = await window.context.getAiProvider()
-        setAiProvider(savedAiProvider)
+        if (window.context && typeof window.context.getAiProvider === 'function') {
+          const savedAiProvider = await window.context.getAiProvider()
+          setAiProvider(savedAiProvider)
+        } else {
+          throw new Error('window.context.getAiProvider is not defined')
+        }
       } catch (error: any) {
         console.error('Failed to load AI provider:', error)
       }
@@ -123,7 +129,37 @@ export const Settings = () => {
     loadSavedClaudeModel()
   }, [toast])
 
-  const updateAiProvider = async (provider: 'openai' | 'claude') => {
+  // Load the saved Ollama base URL when the component mounts
+  useEffect(() => {
+    const loadOllamaBaseUrl = async () => {
+      try {
+        if (window.context && typeof window.context.getOllamaBaseUrl === 'function') {
+          const url = await window.context.getOllamaBaseUrl()
+          if (url) setOllamaBaseUrl(url)
+        } else {
+          throw new Error('window.context.getOllamaBaseUrl is not defined')
+        }
+      } catch (error) {
+        console.error('Failed to load Ollama base URL:', error)
+      }
+    }
+    loadOllamaBaseUrl()
+  }, [])
+
+  // Load the saved Ollama model when the component mounts
+  useEffect(() => {
+    const loadOllamaModel = async () => {
+      try {
+        const model = await window.context.getOllamaModel()
+        if (model) setOllamaModel(model)
+      } catch (error) {
+        console.error('Failed to load Ollama model:', error)
+      }
+    }
+    loadOllamaModel()
+  }, [])
+
+  const updateAiProvider = async (provider: 'openai' | 'claude' | 'ollama') => {
     try {
       await window.context.setAiProvider(provider)
       setAiProvider(provider)
@@ -140,14 +176,20 @@ export const Settings = () => {
       if (aiProvider === 'openai') {
         await window.context.setOpenAiKey(openAIApiKey)
         setApiKeySuccess('OpenAI API key saved successfully.')
-      } else {
+      } else if (aiProvider === 'claude') {
         await window.context.setClaudeApiKey(claudeApiKey)
         setApiKeySuccess('Claude API key saved successfully.')
+      } else if (aiProvider === 'ollama') {
+        // For Ollama, save the base URL and model
+        await window.context.setOllamaBaseUrl(ollamaBaseUrl)
+        if (ollamaModel) {
+          await window.context.setOllamaModel(ollamaModel)
+        }
+        setApiKeySuccess('Ollama configuration saved successfully.')
       }
-      setApiKeyError(null)
     } catch (error: any) {
       setApiKeyError(
-        `Failed to save the ${aiProvider === 'openai' ? 'OpenAI' : 'Claude'} API key: ` +
+        `Failed to save the ${aiProvider === 'openai' ? 'OpenAI' : aiProvider === 'claude' ? 'Claude' : 'Ollama'} configuration: ` +
           error.message
       )
     } finally {
@@ -178,19 +220,37 @@ export const Settings = () => {
       if (aiProvider === 'openai') {
         await window.context.setOpenAiModel(openAIModel)
         setModelSuccess('OpenAI model saved successfully.')
-      } else {
+      } else if (aiProvider === 'claude') {
         await window.context.setClaudeModel(claudeModel)
         setModelSuccess('Claude model saved successfully.')
+      } else if (aiProvider === 'ollama') {
+        await window.context.setOllamaModel(ollamaModel)
+        setModelSuccess('Ollama model saved successfully.')
       }
       setModelError(null)
     } catch (error: any) {
       setModelError(
-        `Failed to save the ${aiProvider === 'openai' ? 'OpenAI' : 'Claude'} model: ` +
+        `Failed to save the ${aiProvider === 'openai' ? 'OpenAI' : aiProvider === 'claude' ? 'Claude' : 'Ollama'} model: ` +
           error.message
       )
     } finally {
       setIsSavingModel(false)
     }
+  }
+
+  // Function to determine if save button should be disabled
+  const isSaveDisabled = () => {
+    if (isSavingApiKey) return true
+
+    if (aiProvider === 'openai') {
+      return !openAIApiKey.trim()
+    } else if (aiProvider === 'claude') {
+      return !claudeApiKey.trim()
+    } else if (aiProvider === 'ollama') {
+      return !ollamaBaseUrl.trim()
+    }
+
+    return true
   }
 
   return (
@@ -225,69 +285,109 @@ export const Settings = () => {
               <SelectContent>
                 <SelectItem value="openai">OpenAI</SelectItem>
                 <SelectItem value="claude">Claude</SelectItem>
+                <SelectItem value="ollama">Ollama</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="api-key" className="text-xs">
-              API Key
-            </Label>
-            <Input
-              id="api-key"
-              type="text"
-              value={aiProvider === 'openai' ? openAIApiKey : claudeApiKey}
-              onChange={(e) =>
-                aiProvider === 'openai'
-                  ? setOpenAIApiKey(e.target.value)
-                  : setClaudeApiKey(e.target.value)
-              }
-              placeholder={aiProvider === 'openai' ? 'sk-...' : 'sk-ant-...'}
-              className="font-mono text-xs h-8"
-            />
-            <p className="text-xs text-muted-foreground">
-              {aiProvider === 'openai' ? (
-                <>
-                  You can create an API key at{' '}
-                  <a
-                    href="https://platform.openai.com/account/api-keys"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline"
-                  >
-                    OpenAI API Keys
-                  </a>
-                  .
-                </>
-              ) : (
-                <>
-                  You can create an API key at{' '}
-                  <a
-                    href="https://console.anthropic.com/account/keys"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline"
-                  >
-                    Anthropic Console
-                  </a>
-                  .
-                </>
-              )}
-            </p>
-            {apiKeyError && <p className="text-xs text-destructive">{apiKeyError}</p>}
-            {apiKeySuccess && <p className="text-xs text-green-500">{apiKeySuccess}</p>}
-          </div>
+          {/* Conditional rendering based on AI provider */}
+          {aiProvider === 'ollama' ? (
+            // Ollama configuration
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="ollama-base-url" className="text-xs">
+                  Base URL
+                </Label>
+                <Input
+                  id="ollama-base-url"
+                  type="text"
+                  value={ollamaBaseUrl}
+                  onChange={(e) => setOllamaBaseUrl(e.target.value)}
+                  placeholder="http://localhost:11434/v1/"
+                  className="font-mono text-xs h-8"
+                />
+                <p className="text-xs text-muted-foreground">
+                  URL where your Ollama instance is running.
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="ollama-model" className="text-xs">
+                  Model (Optional)
+                </Label>
+                <Input
+                  id="ollama-model"
+                  type="text"
+                  value={ollamaModel}
+                  onChange={(e) => setOllamaModel(e.target.value)}
+                  placeholder="llama3"
+                  className="font-mono text-xs h-8"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Model name to use. Leave empty to use default.
+                </p>
+              </div>
+            </div>
+          ) : (
+            // OpenAI and Claude API key configuration
+            <div className="space-y-1.5">
+              <Label htmlFor="api-key" className="text-xs">
+                API Key
+              </Label>
+              <Input
+                id="api-key"
+                type="text"
+                value={aiProvider === 'openai' ? openAIApiKey : claudeApiKey}
+                onChange={(e) =>
+                  aiProvider === 'openai'
+                    ? setOpenAIApiKey(e.target.value)
+                    : setClaudeApiKey(e.target.value)
+                }
+                placeholder={aiProvider === 'openai' ? 'sk-...' : 'sk-ant-...'}
+                className="font-mono text-xs h-8"
+              />
+              <p className="text-xs text-muted-foreground">
+                {aiProvider === 'openai' ? (
+                  <>
+                    You can create an API key at{' '}
+                    <a
+                      href="https://platform.openai.com/account/api-keys"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline"
+                    >
+                      OpenAI API Keys
+                    </a>
+                    .
+                  </>
+                ) : (
+                  <>
+                    You can create an API key at{' '}
+                    <a
+                      href="https://console.anthropic.com/account/keys"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline"
+                    >
+                      Anthropic Console
+                    </a>
+                    .
+                  </>
+                )}
+              </p>
+            </div>
+          )}
+
+          {apiKeyError && <p className="text-xs text-destructive">{apiKeyError}</p>}
+          {apiKeySuccess && <p className="text-xs text-green-500">{apiKeySuccess}</p>}
 
           <Button
             onClick={updateApiKey}
-            disabled={
-              isSavingApiKey ||
-              !(aiProvider === 'openai' ? openAIApiKey.trim() : claudeApiKey.trim())
-            }
+            disabled={isSaveDisabled()}
             className="flex items-center space-x-1.5 h-8 px-3 text-xs"
             size="sm"
           >
-            <span>{isSavingApiKey ? 'Saving...' : 'Save Key'}</span>
+            <span>{isSavingApiKey ? 'Saving...' : 'Save Configuration'}</span>
           </Button>
 
           <Collapsible open={isAdvancedOpen} onOpenChange={setIsAdvancedOpen}>
@@ -342,13 +442,29 @@ export const Settings = () => {
                 <Input
                   id="model"
                   type="text"
-                  value={aiProvider === 'openai' ? openAIModel : claudeModel}
-                  onChange={(e) =>
+                  value={
                     aiProvider === 'openai'
-                      ? setOpenAIModel(e.target.value)
-                      : setClaudeModel(e.target.value)
+                      ? openAIModel
+                      : aiProvider === 'claude'
+                        ? claudeModel
+                        : ollamaModel
                   }
-                  placeholder={aiProvider === 'openai' ? 'gpt-4o' : 'claude-sonnet-4-20250514'}
+                  onChange={(e) => {
+                    if (aiProvider === 'openai') {
+                      setOpenAIModel(e.target.value)
+                    } else if (aiProvider === 'claude') {
+                      setClaudeModel(e.target.value)
+                    } else {
+                      setOllamaModel(e.target.value)
+                    }
+                  }}
+                  placeholder={
+                    aiProvider === 'openai'
+                      ? 'gpt-4o'
+                      : aiProvider === 'claude'
+                        ? 'claude-sonnet-4-20250514'
+                        : 'llama3'
+                  }
                   className="font-mono text-xs h-8"
                   autoComplete="off"
                 />
@@ -358,10 +474,14 @@ export const Settings = () => {
                       Model ID to use for query generation. Leave empty to use gpt-4o (default).
                       Examples: gpt-4, gpt-3.5-turbo, gpt-4o-mini.
                     </>
-                  ) : (
+                  ) : aiProvider === 'claude' ? (
                     <>
                       Model ID to use for query generation. Leave empty to use
                       claude-sonnet-4-20250514 (default).
+                    </>
+                  ) : (
+                    <>
+                      Model name to use for query generation. Examples: llama3, codellama, mistral.
                     </>
                   )}
                 </p>

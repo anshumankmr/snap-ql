@@ -16,6 +16,10 @@ import {
   setClaudeApiKey,
   getClaudeModel,
   setClaudeModel,
+  getOllamaBaseUrl,
+  setOllamaBaseUrl,
+  getOllamaModel,
+  setOllamaModel,
   // Connection management functions
   createConnection,
   editConnection,
@@ -119,6 +123,7 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
+  // OpenAI handlers
   ipcMain.handle('getOpenAiKey', async () => {
     return (await getOpenAiKey()) ?? ''
   })
@@ -151,6 +156,7 @@ app.whenReady().then(() => {
     await setAiProvider(aiProvider)
   })
 
+  // Claude handlers
   ipcMain.handle('getClaudeApiKey', async () => {
     return (await getClaudeApiKey()) ?? ''
   })
@@ -165,6 +171,70 @@ app.whenReady().then(() => {
 
   ipcMain.handle('setClaudeModel', async (_, claudeModel) => {
     await setClaudeModel(claudeModel)
+  })
+
+  // Ollama handlers
+  ipcMain.handle('getOllamaBaseUrl', async () => {
+    return (await getOllamaBaseUrl()) ?? 'http://localhost:11434/v1/'
+  })
+
+  ipcMain.handle('setOllamaBaseUrl', async (_, ollamaBaseUrl) => {
+    await setOllamaBaseUrl(ollamaBaseUrl)
+  })
+
+  ipcMain.handle('getOllamaModel', async () => {
+    return (await getOllamaModel()) ?? ''
+  })
+
+  ipcMain.handle('setOllamaModel', async (_, ollamaModel) => {
+    await setOllamaModel(ollamaModel)
+  })
+
+  // Add handler to list available Ollama models
+  ipcMain.handle('getOllamaModels', async () => {
+    try {
+      const baseUrl = await getOllamaBaseUrl() || 'http://localhost:11434/v1/'
+      const response = await fetch(`${baseUrl}/api/tags`)
+      if (!response.ok) {
+        throw new Error(`Failed to fetch Ollama models: ${response.statusText}`)
+      }
+      const data = await response.json()
+      return {
+        success: true,
+        models: data.models || []
+      }
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message,
+        models: []
+      }
+    }
+  })
+
+  // Test Ollama connection
+  ipcMain.handle('testOllamaConnection', async (_, baseUrl) => {
+    try {
+      const response = await fetch(`${baseUrl}/api/tags`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      
+      if (!response.ok) {
+        throw new Error(`Connection failed: ${response.statusText}`)
+      }
+      
+      return { success: true }
+    } catch (error: any) {
+      return { 
+        success: false, 
+        error: error.message.includes('fetch') 
+          ? 'Cannot connect to Ollama. Make sure Ollama is running and accessible.'
+          : error.message 
+      }
+    }
   })
 
   // Connection management handlers
@@ -329,15 +399,19 @@ app.whenReady().then(() => {
 
       let apiKey: string
       let model: string | undefined
-      let openAiBaseUrl: string | undefined
+      let baseUrl: string | undefined
 
       if (aiProvider === 'openai') {
         apiKey = (await getOpenAiKey()) ?? ''
         model = await getOpenAiModel()
-        openAiBaseUrl = await getOpenAiBaseUrl()
-      } else {
+        baseUrl = await getOpenAiBaseUrl()
+      } else if (aiProvider === 'claude') {
         apiKey = (await getClaudeApiKey()) ?? ''
         model = await getClaudeModel()
+      } else if (aiProvider === 'ollama') {
+        apiKey = '' // Ollama doesn't require API key
+        model = await getOllamaModel()
+        baseUrl = await getOllamaBaseUrl()
       }
 
       const query = await generateQuery(
@@ -347,7 +421,7 @@ app.whenReady().then(() => {
         apiKey,
         existingQuery,
         promptExtension ?? '',
-        openAiBaseUrl,
+        baseUrl,
         model
       )
       return {

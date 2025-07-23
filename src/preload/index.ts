@@ -17,7 +17,7 @@ try {
     setOpenAiModel: async (openAiModel: string) =>
       await ipcRenderer.invoke('setOpenAiModel', openAiModel),
     getAiProvider: async () => await ipcRenderer.invoke('getAiProvider'),
-    setAiProvider: async (aiProvider: 'openai' | 'claude') =>
+    setAiProvider: async (aiProvider: 'openai' | 'claude' | 'ollama') =>
       await ipcRenderer.invoke('setAiProvider', aiProvider),
     getClaudeApiKey: async () => await ipcRenderer.invoke('getClaudeApiKey'),
     setClaudeApiKey: async (claudeApiKey: string) =>
@@ -25,6 +25,16 @@ try {
     getClaudeModel: async () => await ipcRenderer.invoke('getClaudeModel'),
     setClaudeModel: async (claudeModel: string) =>
       await ipcRenderer.invoke('setClaudeModel', claudeModel),
+    getOllamaBaseUrl: async () => await ipcRenderer.invoke('getOllamaBaseUrl'),
+    setOllamaBaseUrl: async (ollamaBaseUrl: string) =>
+      await ipcRenderer.invoke('setOllamaBaseUrl', ollamaBaseUrl),
+    getOllamaModel: async () => await ipcRenderer.invoke('getOllamaModel'),
+    setOllamaModel: async (ollamaModel: string) =>
+      await ipcRenderer.invoke('setOllamaModel', ollamaModel),
+    // Add missing Ollama-related functions
+    getOllamaModels: async () => await ipcRenderer.invoke('getOllamaModels'),
+    testOllamaConnection: async (baseUrl: string) =>
+      await ipcRenderer.invoke('testOllamaConnection', baseUrl),
 
     // Connection management
     createConnection: async (name: string, connectionMetadata: any) =>

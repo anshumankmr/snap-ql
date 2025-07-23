@@ -31,13 +31,16 @@ const favoritesSchema = z.object({
 
 // Global settings schema (AI provider settings only)
 const globalSettingsSchema = z.object({
-  aiProvider: z.enum(['openai', 'claude']).optional(),
+  aiProvider: z.enum(['openai', 'claude', 'ollama']).optional(),
   openAiKey: z.string().optional(),
   openAiBaseUrl: z.string().optional(),
   openAiModel: z.string().optional(),
   claudeApiKey: z.string().optional(),
-  claudeModel: z.string().optional()
+  claudeModel: z.string().optional(),
+  ollamaBaseUrl: z.string().optional(),
+  ollamaModel: z.string().optional()
 })
+
 
 // Connection settings schema
 const connectionSettingsSchema = z.object({
@@ -51,8 +54,11 @@ const defaultGlobalSettings: z.infer<typeof globalSettingsSchema> = {
   openAiBaseUrl: undefined,
   openAiModel: undefined,
   claudeApiKey: undefined,
-  claudeModel: undefined
+  claudeModel: undefined,
+  ollamaBaseUrl: undefined,
+  ollamaModel: undefined
 }
+
 
 function rootDir() {
   // Allow tests to override the root directory
@@ -194,7 +200,7 @@ export async function getAiProvider() {
   return settings.aiProvider || 'openai'
 }
 
-export async function setAiProvider(aiProvider: 'openai' | 'claude') {
+export async function setAiProvider(aiProvider: 'openai' | 'claude' | 'ollama') {
   const settings = await getGlobalSettings()
   settings.aiProvider = aiProvider
   await setGlobalSettings(settings)
@@ -219,6 +225,27 @@ export async function getClaudeModel() {
 export async function setClaudeModel(claudeModel: string) {
   const settings = await getGlobalSettings()
   settings.claudeModel = claudeModel
+  await setGlobalSettings(settings)
+}
+export async function getOllamaBaseUrl() {
+  const settings = await getGlobalSettings()
+  return settings.ollamaBaseUrl
+}
+
+export async function setOllamaBaseUrl(ollamaBaseUrl: string) {
+  const settings = await getGlobalSettings()
+  settings.ollamaBaseUrl = ollamaBaseUrl
+  await setGlobalSettings(settings)
+}
+
+export async function getOllamaModel() {
+  const settings = await getGlobalSettings()
+  return settings.ollamaModel
+}
+
+export async function setOllamaModel(ollamaModel: string) {
+  const settings = await getGlobalSettings()
+  settings.ollamaModel = ollamaModel
   await setGlobalSettings(settings)
 }
 

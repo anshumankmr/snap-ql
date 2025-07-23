@@ -15,12 +15,19 @@ declare global {
       setOpenAiBaseUrl: (openAiBaseUrl: string) => Promise<void>
       getOpenAiModel: () => Promise<string>
       setOpenAiModel: (openAiModel: string) => Promise<void>
-      getAiProvider: () => Promise<'openai' | 'claude'>
-      setAiProvider: (aiProvider: 'openai' | 'claude') => Promise<void>
+      getAiProvider: () => Promise<'openai' | 'claude' | 'ollama'>
+      setAiProvider: (aiProvider: 'openai' | 'claude' | 'ollama') => Promise<void>
       getClaudeApiKey: () => Promise<string>
       setClaudeApiKey: (claudeApiKey: string) => Promise<void>
       getClaudeModel: () => Promise<string>
       setClaudeModel: (claudeModel: string) => Promise<void>
+      getOllamaBaseUrl: () => Promise<string>
+      setOllamaBaseUrl: (ollamaBaseUrl: string) => Promise<void>
+      getOllamaModel: () => Promise<string>
+      setOllamaModel: (ollamaModel: string) => Promise<void>
+      // Add missing Ollama-related functions
+      getOllamaModels: () => Promise<{ success: boolean; models: any[]; error?: string }>
+      testOllamaConnection: (baseUrl: string) => Promise<{ success: boolean; error?: string }>
 
       // Connection management
       createConnection: (name: string, connectionMetadata: any) => Promise<void>
