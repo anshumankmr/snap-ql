@@ -39,24 +39,20 @@ export async function generateQuery(
       })
       modelToUse = model || 'gpt-4o'
       aiModel = openai(modelToUse)
-
     } else if (aiProvider === 'claude') {
       const anthropic = createAnthropic({ apiKey })
       modelToUse = model || 'claude-sonnet-4-20250514'
       aiModel = anthropic(modelToUse)
-
     } else if (aiProvider === 'ollama') {
       const openai = createOpenAI({
         apiKey: 'ollama-placeholder', // required by SDK, even if not used
-        baseURL: openAiUrl || 'http://localhost:11434/v1/'
+        baseURL: openAiUrl || 'http://localhost:11434/v1'
       })
       modelToUse = model || 'llama3'
       aiModel = openai(modelToUse)
-
     } else {
       throw new Error(`Unsupported AI provider: ${aiProvider}`)
     }
-
 
     const systemPrompt = `
       You are a SQL (${dbType}) and data visualization expert. Your job is to help the user write or modify a SQL query to retrieve the data they need. The table schema is as follows:
@@ -70,7 +66,7 @@ export async function generateQuery(
       ${promptExtension.length > 0 ? `Extra information: ${promptExtension}` : ``}
 
       format the query in a way that is easy to read and understand.
-      ${dbType === 'postgres' ? 'wrap table names in double quotes' : ''}
+      ${dbType === 'postgres' ? (aiProvider === 'ollama' ? 'Wrap both table names and column names in double quotes, especially if they contain uppercase letters or special characters.' : 'Wrap table names in double quotes.') : ''}
       if the query results can be effectively visualized using a graph, specify which column should be used for the x-axis (domain) and which column(s) should be used for the y-axis (range).
     `
 
