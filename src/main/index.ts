@@ -397,7 +397,7 @@ app.whenReady().then(() => {
       const aiProvider = await getAiProvider()
       const promptExtension = await getConnectionPromptExtension(name)
 
-      let apiKey: string
+      let apiKey: string = '' // Initialize with empty string
       let model: string | undefined
       let baseUrl: string | undefined
 
